@@ -107,6 +107,31 @@ ccw --uninstall
 
 symlink のみ削除されます。clone したリポジトリは `rm -rf <repo>` で手動削除してください。
 
+## Development
+
+### Prerequisites
+
+ローカルで lefthook pre-commit フックを有効化するため、以下を事前に用意してください。
+
+```bash
+brew install lefthook shellcheck shfmt yamllint actionlint
+lefthook install
+```
+
+`markdownlint-cli2` / `renovate-config-validator` は `npm exec` で都度取得されるため事前インストール不要（Node.js / npm は必要）。
+
+### Hooks
+
+- `check-added-large-files`: 512KB 超のファイルをブロック
+- `detect-private-key`: 秘密鍵の混入を検出
+- `gofmt` / `golangci-lint`: Go ファイル対象（Phase 1 以降で有効化）
+- `shellcheck` / `shfmt`: bash スクリプト対象（`bin/ccw` / `tests/*.bats`）
+- `yamllint` / `actionlint`: YAML / GitHub Actions ワークフロー対象
+- `markdownlint-cli2`: Markdown 対象
+- `renovate-config-validator`: `renovate.json5` のみ対象
+
+pre-commit は parallel 実行されるため、各 hook の所要時間は合算ではなく最長値。
+
 ## Future work
 
 - シェル補完 (bash / zsh)
