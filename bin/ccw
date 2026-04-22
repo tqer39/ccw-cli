@@ -95,6 +95,53 @@ print_version() {
 }
 
 # ----------------------------------------------------------------------------
+# uninstall
+# ----------------------------------------------------------------------------
+run_uninstall() {
+  local self real repo
+  self="$(command -v ccw 2>/dev/null || printf '%s' "$0")"
+  real="$(readlink -f "$self" 2>/dev/null || readlink "$self" 2>/dev/null || printf '%s' "$self")"
+  repo="$(cd "$(dirname "$real")/.." && pwd)"
+
+  info "ccw uninstaller"
+  info ""
+  info "This removes the symlink only:"
+  info "  symlink: $self"
+  if [[ "$self" != "$real" ]]; then
+    info "         → $real"
+  fi
+  info ""
+  info "The cloned repo is kept as-is:"
+  info "  repo:    $repo"
+  info ""
+  info "If you also want to delete the repo, remove it manually afterwards:"
+  info "  rm -rf $repo"
+  info ""
+
+  if [[ ! -t 0 ]]; then
+    info "(non-interactive: cancelled)"
+    exit 1
+  fi
+
+  local ans
+  read -rp "Remove symlink? [y/N]: " ans
+  case "$ans" in
+    y|Y|yes|YES) ;;
+    *) info "Cancelled."; exit 0 ;;
+  esac
+
+  if [[ -L "$self" ]]; then
+    rm -v "$self"
+    success "Removed symlink."
+  else
+    warn "no symlink found at $self (nothing to remove)"
+  fi
+
+  info ""
+  info "You may also remove PATH entry for \$HOME/.local/bin if no longer needed."
+}
+
+# ----------------------------------------------------------------------------
 # git helpers
 # ----------------------------------------------------------------------------
 # worktree 内から呼ばれても main repo のトップレベルを返す
@@ -172,8 +219,8 @@ main() {
     exit 0
   fi
   if [[ $FLAG_UNINSTALL -eq 1 ]]; then
-    error "--uninstall not implemented yet"
-    exit 1
+    run_uninstall
+    exit 0
   fi
   if [[ $FLAG_UPDATE -eq 1 ]]; then
     error "--update not implemented yet"
