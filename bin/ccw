@@ -294,6 +294,40 @@ launch_claude_new() {
   "${cmd[@]}"
 }
 
+check_superpowers() {
+  # ~/.claude/plugins/cache/*/superpowers/ を glob で検出
+  local glob_pat="$HOME/.claude/plugins/cache/*/superpowers"
+  if compgen -G "$glob_pat" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  warn "missing dependency: superpowers plugin (required for -s)"
+  info ""
+  info "The following command will install it:"
+  info "  claude plugin install claude-plugins-official/superpowers"
+  info ""
+  info "(※ 正式コマンドは未確定。失敗する場合は手動でプラグインを追加してください。"
+  info "    reference: https://docs.claude.com/en/docs/claude-code/plugins )"
+  info ""
+
+  if [[ ! -t 0 ]]; then
+    info "(non-interactive: cancelled)"
+    exit 1
+  fi
+
+  local ans
+  read -rp "Run now? [y/N]: " ans
+  case "$ans" in
+    y|Y|yes|YES) ;;
+    *) info "Cancelled."; exit 1 ;;
+  esac
+
+  if ! claude plugin install claude-plugins-official/superpowers; then
+    error "plugin install failed. Install manually and rerun."
+    exit 1
+  fi
+}
+
 superpowers_preamble() {
   cat <<'EOF'
 このセッションは Claude Code の --worktree sandbox 内です。
@@ -425,6 +459,7 @@ main() {
 
   local preamble=""
   if [[ $FLAG_SUPER -eq 1 ]]; then
+    check_superpowers
     preamble="$(superpowers_preamble)"
   fi
 
