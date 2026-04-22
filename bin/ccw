@@ -431,6 +431,85 @@ worktree_icon() {
   esac
 }
 
+# bash + tput で ↑↓ 選択 UI を提供する。
+# 引数: 表示文字列の配列
+# 結果: 選択したインデックス (0-based) を stdout に出力。キャンセルで 1 を返す。
+tui_select() {
+  local -a items=("$@")
+  local n=${#items[@]}
+  if [[ $n -eq 0 ]]; then
+    return 1
+  fi
+
+  if [[ ! -t 0 || ! -t 1 ]]; then
+    tui_select_fallback "${items[@]}"
+    return $?
+  fi
+
+  local sel=0
+  local drawn=0
+  tput civis 2>/dev/null || true
+  local orig_trap
+  orig_trap="$(trap -p INT)"
+  trap 'tput cnorm 2>/dev/null || true; exit 130' INT
+
+  while true; do
+    if [[ $drawn -eq 1 ]]; then
+      tput cuu "$n" 2>/dev/null || true
+    fi
+    local i
+    for i in "${!items[@]}"; do
+      tput el 2>/dev/null || true
+      if [[ $i -eq $sel ]]; then
+        printf '%s> %s%s\n' "$C_INV" "${items[$i]}" "$C_RESET" >&2
+      else
+        printf '  %s\n' "${items[$i]}" >&2
+      fi
+    done
+    drawn=1
+
+    local key rest
+    IFS= read -rsn1 key
+    if [[ "$key" == $'\e' ]]; then
+      IFS= read -rsn2 -t 0.01 rest || rest=""
+      case "$rest" in
+        '[A') sel=$(( (sel - 1 + n) % n )) ;;
+        '[B') sel=$(( (sel + 1) % n )) ;;
+      esac
+    elif [[ -z "$key" ]]; then
+      tput cnorm 2>/dev/null || true
+      eval "$orig_trap" 2>/dev/null || trap - INT
+      printf '%d\n' "$sel"
+      return 0
+    elif [[ "$key" == "q" || "$key" == "Q" ]]; then
+      tput cnorm 2>/dev/null || true
+      eval "$orig_trap" 2>/dev/null || trap - INT
+      return 1
+    fi
+  done
+}
+
+# tty がない場合の番号選択 fallback
+tui_select_fallback() {
+  local -a items=("$@")
+  info "Select an item:" >&2
+  local i
+  for i in "${!items[@]}"; do
+    printf '  %d) %s\n' "$((i + 1))" "${items[$i]}" >&2
+  done
+  local choice
+  read -rp "#? " choice
+  if [[ ! "$choice" =~ ^[0-9]+$ ]]; then
+    return 1
+  fi
+  local idx=$((choice - 1))
+  if (( idx < 0 || idx >= ${#items[@]} )); then
+    return 1
+  fi
+  printf '%d\n' "$idx"
+  return 0
+}
+
 superpowers_preamble() {
   cat <<'EOF'
 このセッションは Claude Code の --worktree sandbox 内です。
