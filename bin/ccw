@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+# ccw - Claude Code worktree launcher
+# https://github.com/tqer39/ccw-cli
+#
+# shellcheck disable=SC2034  # color vars wired for future use
+# shellcheck disable=SC2329  # helper fns referenced after later tasks wire them up
+
+set -euo pipefail
+
+if [[ -n "${CCW_DEBUG:-}" ]]; then
+  set -x
+  export PS4='+ ${BASH_SOURCE##*/}:${LINENO}: '
+fi
+
+# ----------------------------------------------------------------------------
+# color helpers
+# ----------------------------------------------------------------------------
+init_color() {
+  if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+    C_RESET=$'\033[0m'
+    C_BOLD=$'\033[1m'
+    C_DIM=$'\033[2m'
+    C_INV=$'\033[7m'
+    C_YELLOW=$'\033[1;33m'
+    C_RED=$'\033[1;31m'
+    C_GREEN=$'\033[1;32m'
+    C_CYAN=$'\033[1;36m'
+  else
+    C_RESET="" C_BOLD="" C_DIM="" C_INV=""
+    C_YELLOW="" C_RED="" C_GREEN="" C_CYAN=""
+  fi
+}
+
+warn()    { printf '%s⚠️  warning:%s %s\n' "$C_YELLOW" "$C_RESET" "$*" >&2; }
+error()   { printf '%s✖ error:%s %s\n' "$C_RED" "$C_RESET" "$*" >&2; }
+info()    { printf '%s\n' "$*"; }
+success() { printf '%s✓%s %s\n' "$C_GREEN" "$C_RESET" "$*"; }
+
+# ----------------------------------------------------------------------------
+# help / version
+# ----------------------------------------------------------------------------
+print_help() {
+  cat <<'EOF'
+Usage: ccw [options] [-- <claude-args>...]
+
+Claude Code worktree launcher.
+
+Options:
+  -n, --new            常に新規 worktree で起動（既存 worktree の選択をスキップ）
+  -s, --superpowers    superpowers プリアンブルを注入して起動
+      --update         ccw を最新版に更新
+      --uninstall      ccw 自身をアンインストール
+  -v, --version        バージョン情報を表示
+  -h, --help           このヘルプを表示
+
+Arguments after `--` are forwarded to `claude` verbatim.
+
+Examples:
+  ccw                            既存 worktree があれば選択、なければ新規起動
+  ccw -n                         既存を無視して新規 worktree で起動
+  ccw -s                         新規 worktree + superpowers
+  ccw -- --model claude-opus-4-7 claude へ引数をパススルー
+  ccw --update                   リモートから pull
+  ccw --uninstall                ccw を削除
+
+Environment:
+  NO_COLOR=1       カラー出力を無効化
+  CCW_DEBUG=1      詳細ログ出力 (set -x)
+
+Exit codes:
+  0  success
+  1  user error / cancellation
+  *  passthrough from `claude`
+EOF
+}
+
+resolve_ccw_repo() {
+  local self real
+  self="$(command -v ccw 2>/dev/null || printf '%s' "$0")"
+  real="$(readlink -f "$self" 2>/dev/null || readlink "$self" 2>/dev/null || printf '%s' "$self")"
+  (cd "$(dirname "$real")/.." && pwd)
+}
+
+print_version() {
+  local repo version date
+  repo="$(resolve_ccw_repo)"
+  if [[ -d "$repo/.git" ]]; then
+    version="$(git -C "$repo" describe --always --tags --dirty 2>/dev/null || printf 'unknown')"
+    date="$(git -C "$repo" log -1 --format=%cs 2>/dev/null || printf 'unknown')"
+  else
+    version="unknown"
+    date="unknown"
+  fi
+  printf 'ccw %s (%s)\n' "$version" "$date"
+}
+
+# ----------------------------------------------------------------------------
+# main
+# ----------------------------------------------------------------------------
+main() {
+  init_color
+
+  case "${1:-}" in
+    -h|--help)    print_help; exit 0 ;;
+    -v|--version) print_version; exit 0 ;;
+    "")           error "not implemented yet"; exit 1 ;;
+    *)            error "unknown argument: $1"; exit 1 ;;
+  esac
+}
+
+main "$@"
