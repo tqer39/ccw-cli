@@ -4,6 +4,7 @@
 #
 # shellcheck disable=SC2034  # color vars wired for future use
 # shellcheck disable=SC2329  # helper fns referenced after later tasks wire them up
+# shellcheck disable=SC2317  # returns are reachable; following call exits non-locally
 
 set -euo pipefail
 
@@ -489,6 +490,144 @@ tui_select() {
   done
 }
 
+# picker 選択から resume/delete/new の分岐までを担う
+# 呼び出し元から CLAUDE_ARGS 配列を見る前提
+run_picker_flow() {
+  local main_repo="$1"
+
+  local -a wt_paths=() wt_branches=() wt_flags_arr=()
+  while IFS=$'\t' read -r path branch; do
+    [[ -z "$path" ]] && continue
+    wt_paths+=("$path")
+    wt_branches+=("$branch")
+    wt_flags_arr+=("$(worktree_flags "$path")")
+  done < <(list_ccw_worktrees "$main_repo")
+
+  local count=${#wt_paths[@]}
+  if [[ $count -eq 0 ]]; then
+    info "No existing worktrees under .claude/worktrees/."
+    launch_new_from_picker
+    return
+  fi
+
+  while true; do
+    local -a items=()
+    local i
+    for i in "${!wt_paths[@]}"; do
+      local name icon
+      name="$(basename "${wt_paths[$i]}")"
+      icon="$(worktree_icon "${wt_flags_arr[$i]}")"
+      items+=("$(printf '%s  %-24s %s  (%s)' "$icon" "$name" "${wt_branches[$i]}" "${wt_flags_arr[$i]}")")
+    done
+    items+=("➕  [new]                    Start new worktree")
+    items+=("🚪  [quit]                   Cancel")
+
+    local choice
+    choice="$(tui_select "${items[@]}")" || { info "Cancelled."; exit 0; }
+
+    local idx="$choice"
+    if [[ $idx -eq $count ]]; then
+      launch_new_from_picker
+      return
+    fi
+    if [[ $idx -eq $((count + 1)) ]]; then
+      info "Cancelled."
+      exit 0
+    fi
+
+    local sel_path="${wt_paths[$idx]}"
+    local sel_branch="${wt_branches[$idx]}"
+    local sel_flags="${wt_flags_arr[$idx]}"
+
+    info ""
+    info "Selected: $(basename "$sel_path") ($sel_flags)"
+    info "Path:     $sel_path"
+    info "Branch:   $sel_branch"
+    info ""
+    info "What to do?"
+    info "  [r] resume — open claude in this worktree"
+    info "  [d] delete — remove the worktree"
+    info "  [b] back   — return to list"
+    info ""
+
+    local action
+    read -rp "Select [r/d/b]: " action
+    case "$action" in
+      r|R)
+        resume_worktree "$sel_path"
+        exit $?
+        ;;
+      d|D)
+        delete_worktree "$main_repo" "$sel_path" "$sel_branch" "$sel_flags"
+        wt_paths=(); wt_branches=(); wt_flags_arr=()
+        while IFS=$'\t' read -r path branch; do
+          [[ -z "$path" ]] && continue
+          wt_paths+=("$path")
+          wt_branches+=("$branch")
+          wt_flags_arr+=("$(worktree_flags "$path")")
+        done < <(list_ccw_worktrees "$main_repo")
+        count=${#wt_paths[@]}
+        if [[ $count -eq 0 ]]; then
+          info ""
+          info "No worktrees left."
+          launch_new_from_picker
+          return
+        fi
+        ;;
+      *)
+        ;;
+    esac
+  done
+}
+
+launch_new_from_picker() {
+  if [[ ${#CLAUDE_ARGS[@]} -gt 0 ]]; then
+    launch_claude_new "" "${CLAUDE_ARGS[@]}"
+  else
+    launch_claude_new ""
+  fi
+  exit $?
+}
+
+resume_worktree() {
+  local wt="$1"
+  cd "$wt"
+  local -a cmd=(claude --permission-mode auto)
+  if [[ ${#CLAUDE_ARGS[@]} -gt 0 ]]; then
+    cmd+=("${CLAUDE_ARGS[@]}")
+  fi
+  "${cmd[@]}"
+}
+
+delete_worktree() {
+  local main_repo="$1" wt="$2" branch="$3" flags="$4"
+  info ""
+  info "Delete worktree $(basename "$wt")?"
+  info "  path:   $wt"
+  info "  branch: $branch"
+  info "  status: $flags"
+  info ""
+  local cmd_preview="git worktree remove \"$wt\""
+  if [[ "$flags" == "dirty" ]]; then
+    warn "worktree is dirty. Modified files will be lost."
+    cmd_preview="git worktree remove --force \"$wt\""
+  fi
+  info "This will run: $cmd_preview"
+  info ""
+  local ans
+  read -rp "Confirm? [y/N]: " ans
+  case "$ans" in
+    y|Y|yes|YES) ;;
+    *) info "Skipped."; return 0 ;;
+  esac
+  if [[ "$flags" == "dirty" ]]; then
+    git -C "$main_repo" worktree remove --force "$wt"
+  else
+    git -C "$main_repo" worktree remove "$wt"
+  fi
+  success "Removed $wt"
+}
+
 # tty がない場合の番号選択 fallback
 tui_select_fallback() {
   local -a items=("$@")
@@ -646,14 +785,18 @@ main() {
     preamble="$(superpowers_preamble)"
   fi
 
-  # -n または -s → 新規 worktree
-  # (デフォルト picker は Task 14 で実装、暫定は新規起動にフォールバック)
-  if [[ ${#CLAUDE_ARGS[@]} -gt 0 ]]; then
-    launch_claude_new "$preamble" "${CLAUDE_ARGS[@]}"
-  else
-    launch_claude_new "$preamble"
+  # -s または -n → 新規 worktree で直接起動 (picker スキップ)
+  if [[ $FLAG_SUPER -eq 1 || $FLAG_NEW -eq 1 ]]; then
+    if [[ ${#CLAUDE_ARGS[@]} -gt 0 ]]; then
+      launch_claude_new "$preamble" "${CLAUDE_ARGS[@]}"
+    else
+      launch_claude_new "$preamble"
+    fi
+    exit $?
   fi
-  exit $?
+
+  # デフォルト (無印) → worktree picker
+  run_picker_flow "$main_repo"
 }
 
 main "$@"
