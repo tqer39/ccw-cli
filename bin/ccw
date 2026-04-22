@@ -95,6 +95,26 @@ print_version() {
 }
 
 # ----------------------------------------------------------------------------
+# git helpers
+# ----------------------------------------------------------------------------
+# worktree 内から呼ばれても main repo のトップレベルを返す
+resolve_main_repo() {
+  local common_dir
+  common_dir="$(git rev-parse --git-common-dir 2>/dev/null)" || return 1
+  common_dir="$(cd "$common_dir" && pwd -P)"
+  dirname "$common_dir"
+}
+
+require_git_repo() {
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    warn "ccw must be run inside a git repository."
+    info "  current directory: ${PWD}"
+    info "  hint: cd into an existing repo, or run \`git init\` to create one."
+    exit 1
+  fi
+}
+
+# ----------------------------------------------------------------------------
 # argument parsing
 # ----------------------------------------------------------------------------
 # パース結果を以下のグローバル変数に設定する
@@ -160,6 +180,14 @@ main() {
     exit 1
   fi
 
+  require_git_repo
+  local main_repo
+  main_repo="$(resolve_main_repo)" || {
+    error "failed to resolve main repository root"
+    exit 1
+  }
+
+  info "main_repo: $main_repo"
   error "launch flow not implemented yet"
   exit 1
 }
