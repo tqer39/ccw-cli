@@ -95,17 +95,73 @@ print_version() {
 }
 
 # ----------------------------------------------------------------------------
+# argument parsing
+# ----------------------------------------------------------------------------
+# パース結果を以下のグローバル変数に設定する
+#   FLAG_NEW / FLAG_SUPER / FLAG_UPDATE / FLAG_UNINSTALL / FLAG_VERSION / FLAG_HELP
+#   CLAUDE_ARGS (配列)
+parse_args() {
+  FLAG_NEW=0
+  FLAG_SUPER=0
+  FLAG_UPDATE=0
+  FLAG_UNINSTALL=0
+  FLAG_VERSION=0
+  FLAG_HELP=0
+  CLAUDE_ARGS=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h|--help)        FLAG_HELP=1; shift ;;
+      -v|--version)     FLAG_VERSION=1; shift ;;
+      -n|--new)         FLAG_NEW=1; shift ;;
+      -s|--superpowers) FLAG_SUPER=1; shift ;;
+      --update)         FLAG_UPDATE=1; shift ;;
+      --uninstall)      FLAG_UNINSTALL=1; shift ;;
+      --)
+        shift
+        CLAUDE_ARGS=("$@")
+        break
+        ;;
+      -*)
+        error "unknown option: $1"
+        info "Run \`ccw -h\` for usage."
+        exit 1
+        ;;
+      *)
+        error "unknown argument: $1"
+        info "Run \`ccw -h\` for usage."
+        exit 1
+        ;;
+    esac
+  done
+}
+
+# ----------------------------------------------------------------------------
 # main
 # ----------------------------------------------------------------------------
 main() {
   init_color
+  parse_args "$@"
 
-  case "${1:-}" in
-    -h|--help)    print_help; exit 0 ;;
-    -v|--version) print_version; exit 0 ;;
-    "")           error "not implemented yet"; exit 1 ;;
-    *)            error "unknown argument: $1"; exit 1 ;;
-  esac
+  if [[ $FLAG_HELP -eq 1 ]]; then
+    print_help
+    exit 0
+  fi
+  if [[ $FLAG_VERSION -eq 1 ]]; then
+    print_version
+    exit 0
+  fi
+  if [[ $FLAG_UNINSTALL -eq 1 ]]; then
+    error "--uninstall not implemented yet"
+    exit 1
+  fi
+  if [[ $FLAG_UPDATE -eq 1 ]]; then
+    error "--update not implemented yet"
+    exit 1
+  fi
+
+  error "launch flow not implemented yet"
+  exit 1
 }
 
 main "$@"
