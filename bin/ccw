@@ -374,6 +374,63 @@ ensure_gitignore() {
   success "Added to $gitignore"
 }
 
+# ----------------------------------------------------------------------------
+# worktree picker
+# ----------------------------------------------------------------------------
+# .claude/worktrees/* 配下の worktree を列挙する。
+# 各行: <path>\t<branch>
+list_ccw_worktrees() {
+  local main_repo="$1"
+  git -C "$main_repo" worktree list --porcelain 2>/dev/null | awk '
+    /^worktree / { path=$2; branch=""; next }
+    /^branch / { branch=$2; next }
+    /^$/ {
+      if (path != "" && path ~ /\/\.claude\/worktrees\//) {
+        sub("refs/heads/", "", branch)
+        printf "%s\t%s\n", path, branch
+      }
+      path=""; branch=""
+    }
+    END {
+      if (path != "" && path ~ /\/\.claude\/worktrees\//) {
+        sub("refs/heads/", "", branch)
+        printf "%s\t%s\n", path, branch
+      }
+    }
+  '
+}
+
+# worktree のステータスを 1 行で返す (dirty | local-only | pushed)
+worktree_flags() {
+  local wt="$1"
+  if [[ -n "$(git -C "$wt" status --porcelain 2>/dev/null)" ]]; then
+    printf 'dirty'
+    return
+  fi
+  local upstream
+  upstream="$(git -C "$wt" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
+  if [[ -z "$upstream" ]]; then
+    printf 'local-only'
+    return
+  fi
+  local ahead
+  ahead="$(git -C "$wt" rev-list --count '@{u}..HEAD' 2>/dev/null || printf '0')"
+  if [[ "$ahead" == "0" ]]; then
+    printf 'pushed'
+  else
+    printf 'local-only'
+  fi
+}
+
+worktree_icon() {
+  case "$1" in
+    pushed)     printf '🟢' ;;
+    local-only) printf '🟡' ;;
+    dirty)      printf '🔴' ;;
+    *)          printf '❔' ;;
+  esac
+}
+
 superpowers_preamble() {
   cat <<'EOF'
 このセッションは Claude Code の --worktree sandbox 内です。
