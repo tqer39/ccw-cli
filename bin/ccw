@@ -95,6 +95,96 @@ print_version() {
 }
 
 # ----------------------------------------------------------------------------
+# update
+# ----------------------------------------------------------------------------
+run_update() {
+  local repo
+  repo="$(resolve_ccw_repo)"
+
+  if [[ ! -d "$repo/.git" ]]; then
+    error "ccw repository not found or not a git repo: $repo"
+    exit 1
+  fi
+
+  info "ccw updater"
+  info ""
+  info "Repository: $repo"
+
+  local branch current_sha current_msg
+  branch="$(git -C "$repo" rev-parse --abbrev-ref HEAD)"
+  current_sha="$(git -C "$repo" rev-parse --short HEAD)"
+  current_msg="$(git -C "$repo" log -1 --format='%s (%cs)' HEAD)"
+  info "Current:    $branch @ $current_sha  \"$current_msg\""
+
+  if [[ "$branch" != "main" ]]; then
+    warn "current branch is '$branch', not 'main'."
+    if [[ ! -t 0 ]]; then exit 1; fi
+    local ans
+    read -rp "Continue anyway? [y/N]: " ans
+    case "$ans" in
+      y|Y|yes|YES) ;;
+      *) info "Cancelled."; exit 0 ;;
+    esac
+  fi
+
+  local dirty
+  dirty="$(git -C "$repo" status --porcelain)"
+  if [[ -n "$dirty" ]]; then
+    error "local modifications detected. Commit or stash them before updating:"
+    printf '%s\n' "$dirty" | sed 's/^/  /' >&2
+    exit 1
+  fi
+
+  info "Fetching origin..."
+  if ! git -C "$repo" fetch origin --quiet; then
+    error "git fetch failed."
+    exit 1
+  fi
+
+  local remote_sha remote_msg
+  remote_sha="$(git -C "$repo" rev-parse --short "origin/${branch}" 2>/dev/null)" || {
+    error "no remote tracking for origin/${branch}"
+    exit 1
+  }
+  remote_msg="$(git -C "$repo" log -1 --format='%s (%cs)' "origin/${branch}")"
+  info "Remote:     origin/${branch} @ $remote_sha  \"$remote_msg\""
+
+  if [[ "$current_sha" == "$remote_sha" ]]; then
+    success "Already up to date."
+    exit 0
+  fi
+
+  info ""
+  info "New commits:"
+  git -C "$repo" log --oneline --no-decorate "HEAD..origin/${branch}" | head -10 | sed 's/^/  /'
+  local total
+  total="$(git -C "$repo" rev-list --count "HEAD..origin/${branch}")"
+  if [[ "$total" -gt 10 ]]; then
+    info "  ... and $((total - 10)) more"
+  fi
+  info ""
+
+  if [[ ! -t 0 ]]; then
+    info "(non-interactive: cancelled)"
+    exit 1
+  fi
+
+  local ans2
+  read -rp "Update now? [y/N]: " ans2
+  case "$ans2" in
+    y|Y|yes|YES) ;;
+    *) info "Cancelled."; exit 0 ;;
+  esac
+
+  if git -C "$repo" pull --ff-only --quiet origin "$branch"; then
+    success "Updated to: $(git -C "$repo" rev-parse --short HEAD)  \"$(git -C "$repo" log -1 --format='%s (%cs)')\""
+  else
+    error "git pull --ff-only failed. You may need to reset/rebase manually."
+    exit 1
+  fi
+}
+
+# ----------------------------------------------------------------------------
 # uninstall
 # ----------------------------------------------------------------------------
 run_uninstall() {
@@ -223,8 +313,8 @@ main() {
     exit 0
   fi
   if [[ $FLAG_UPDATE -eq 1 ]]; then
-    error "--update not implemented yet"
-    exit 1
+    run_update
+    exit 0
   fi
 
   require_git_repo
