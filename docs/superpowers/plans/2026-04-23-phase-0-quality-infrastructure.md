@@ -30,17 +30,20 @@
 ## Task 1: `.gitignore` を Go / goreleaser 向けに更新
 
 **Files:**
+
 - Modify: `.gitignore`
 
 - [ ] **Step 1: 現状の `.gitignore` を確認**
 
 Run:
+
 ```bash
 cat .gitignore
 ```
 
 期待（現状）:
-```
+
+```text
 # OS
 .DS_Store
 Thumbs.db
@@ -61,6 +64,7 @@ tmp/
 ユーザー明示指示「`/gitignore` を使って更新」に従う。
 
 Skill 呼び出し:
+
 - skill: `git:gitignore`
 - args: `Go macOS Linux VisualStudioCode Emacs`
 
@@ -72,7 +76,7 @@ Skill 呼び出し:
 
 `.gitignore` の末尾に以下ブロックを付け足す:
 
-```
+```text
 # goreleaser / local build
 /dist/
 /ccw
@@ -91,6 +95,7 @@ lefthook-local.yml
 - [ ] **Step 4: 追加行が実際に ignore されるか検証**
 
 Run:
+
 ```bash
 mkdir -p dist && touch dist/.keep coverage.out ccw
 git check-ignore -v dist/.keep coverage.out ccw
@@ -102,6 +107,7 @@ rm -rf dist coverage.out ccw
 - [ ] **Step 5: コミット**
 
 Run:
+
 ```bash
 git add .gitignore
 git -c commit.gpgsign=false commit -m "$(cat <<'EOF'
@@ -122,11 +128,13 @@ EOF
 ## Task 2: Renovate 設定を追加
 
 **Files:**
+
 - Create: `renovate.json5`
 
 - [ ] **Step 1: `renovate.json5` を作成**
 
 作成内容（完全体）:
+
 ```json5
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
@@ -141,6 +149,7 @@ EOF
 - [ ] **Step 2: Renovate 設定の構文検証**
 
 Run:
+
 ```bash
 npx --yes --package=renovate -- renovate-config-validator renovate.json5
 ```
@@ -152,6 +161,7 @@ npm が無い場合は先に `brew install node` で入れておく。
 - [ ] **Step 3: コミット**
 
 Run:
+
 ```bash
 git add renovate.json5
 git -c commit.gpgsign=false commit -m "$(cat <<'EOF'
@@ -171,6 +181,7 @@ EOF
 ## Task 3: `lefthook.yml` を追加（pre-commit フック）
 
 **Files:**
+
 - Create: `lefthook.yml`
 
 ### 前提
@@ -182,6 +193,7 @@ EOF
 ### 採用ポリシー
 
 参考 `terraform-github/lefthook.yml` から Go プロジェクトに必要な hook のみ抽出:
+
 - 安全系: `check-added-large-files`, `detect-private-key`（inline 実装。外部スクリプト不要）
 - Go: `gofmt`, `golangci-lint`
 - Shell: `shellcheck`, `shfmt`（既存 `bin/ccw` / `tests/*.bats` をカバー）
@@ -268,6 +280,7 @@ pre-commit:
 - [ ] **Step 2: lefthook をインストール & 有効化**
 
 Run:
+
 ```bash
 command -v lefthook >/dev/null 2>&1 || brew install lefthook
 lefthook install
@@ -278,6 +291,7 @@ lefthook install
 - [ ] **Step 3: lefthook 設定の YAML 構文検証**
 
 Run:
+
 ```bash
 lefthook dump
 ```
@@ -287,6 +301,7 @@ lefthook dump
 - [ ] **Step 4: 手動で pre-commit を試走（ダミーコミット作成）**
 
 Run:
+
 ```bash
 # 既存 bin/ccw に空行 touch して差分を作る (直後に revert)
 printf '' >> bin/ccw
@@ -299,6 +314,7 @@ git checkout -- bin/ccw
 期待: `shellcheck` / `shfmt` / `check-added-large-files` / `detect-private-key` 等が並列実行され全て PASS。Go 関連は該当ファイルなしで skip。
 
 失敗する場合:
+
 - `shellcheck: command not found` → `brew install shellcheck`
 - `shfmt: command not found` → `brew install shfmt`
 - `yamllint: command not found` → `brew install yamllint`
@@ -307,6 +323,7 @@ git checkout -- bin/ccw
 - [ ] **Step 5: コミット**
 
 Run:
+
 ```bash
 git add lefthook.yml
 git -c commit.gpgsign=false commit -m "$(cat <<'EOF'
@@ -330,12 +347,14 @@ EOF
 ## Task 4: auto-assign 設定とワークフローを追加
 
 **Files:**
+
 - Create: `.github/auto_assign.yml`
 - Create: `.github/workflows/auto-assign.yml`
 
 - [ ] **Step 1: `.github/` ディレクトリを確認**
 
 Run:
+
 ```bash
 ls -la .github/ .github/workflows/ 2>/dev/null || true
 ```
@@ -384,6 +403,7 @@ jobs:
 - [ ] **Step 4: actionlint で workflow を検証**
 
 Run:
+
 ```bash
 actionlint .github/workflows/auto-assign.yml
 ```
@@ -393,6 +413,7 @@ actionlint .github/workflows/auto-assign.yml
 - [ ] **Step 5: auto_assign 設定側の YAML 構文検証**
 
 Run:
+
 ```bash
 yamllint --no-warnings .github/auto_assign.yml
 ```
@@ -402,6 +423,7 @@ yamllint --no-warnings .github/auto_assign.yml
 - [ ] **Step 6: コミット**
 
 Run:
+
 ```bash
 git add .github/auto_assign.yml .github/workflows/auto-assign.yml
 git -c commit.gpgsign=false commit -m "$(cat <<'EOF'
@@ -421,11 +443,13 @@ EOF
 ## Task 5: README に lefthook インストール手順を追記
 
 **Files:**
+
 - Modify: `README.md`
 
 - [ ] **Step 1: 挿入位置を確認**
 
 Run:
+
 ```bash
 grep -n '^## ' README.md
 ```
@@ -434,34 +458,28 @@ grep -n '^## ' README.md
 
 - [ ] **Step 2: `## Development` セクションを追加**
 
-`README.md` の `## Future work` 直前に以下ブロックを挿入する。本プラン文書上のフェンス衝突を避けるため外側を `~~~` で囲って提示する。README 本体には `~~~` を除いた中身（先頭の `## Development` から末尾のリストまで）を貼り付けること。
+`README.md` の `## Future work` 直前に以下内容を挿入する。見出し `## Development` から末尾のリストまでをそのまま貼り付ける。
 
-~~~markdown
-## Development
-
-### Prerequisites
-
-ローカルで lefthook pre-commit フックを有効化するため、以下を事前に用意してください。
-
-```bash
-brew install lefthook shellcheck shfmt yamllint actionlint
-lefthook install
-```
-
-### Hooks
-
-- `check-added-large-files`: 512KB 超のファイルをブロック
-- `detect-private-key`: 秘密鍵の混入を検出
-- `gofmt` / `golangci-lint`: Go ファイル対象（Phase 1 以降で有効化）
-- `shellcheck` / `shfmt`: bash スクリプト対象（`bin/ccw` / `tests/*.bats`）
-- `yamllint` / `actionlint`: YAML / GitHub Actions ワークフロー対象
-- `markdownlint-cli2`: Markdown 対象（`npx` で都度取得）
-- `renovate-config-validator`: `renovate.json5` のみ対象
-~~~
+- 見出し: `## Development`
+- 下位見出し 1: `### Prerequisites`
+  - 本文: 「ローカルで lefthook pre-commit フックを有効化するため、以下を事前に用意してください。」
+  - コードブロック（`bash` 言語指定）:
+    - `brew install lefthook shellcheck shfmt yamllint actionlint`
+    - `lefthook install`
+- 下位見出し 2: `### Hooks`
+  - 箇条書き:
+    - `check-added-large-files`: 512KB 超のファイルをブロック
+    - `detect-private-key`: 秘密鍵の混入を検出
+    - `gofmt` / `golangci-lint`: Go ファイル対象（Phase 1 以降で有効化）
+    - `shellcheck` / `shfmt`: bash スクリプト対象（`bin/ccw` / `tests/*.bats`）
+    - `yamllint` / `actionlint`: YAML / GitHub Actions ワークフロー対象
+    - `markdownlint-cli2`: Markdown 対象（`npx` で都度取得）
+    - `renovate-config-validator`: `renovate.json5` のみ対象
 
 - [ ] **Step 3: markdownlint-cli2 で整形検査**
 
 Run:
+
 ```bash
 npx --yes markdownlint-cli2 README.md
 ```
@@ -471,6 +489,7 @@ npx --yes markdownlint-cli2 README.md
 - [ ] **Step 4: コミット**
 
 Run:
+
 ```bash
 git add README.md
 git -c commit.gpgsign=false commit -m "$(cat <<'EOF'
@@ -494,6 +513,7 @@ EOF
 - [ ] **Step 1: 全 hook の drybrun**
 
 Run:
+
 ```bash
 git ls-files | xargs -I{} sh -c '[ -f "{}" ] && echo "{}"' | head -100 > /tmp/ccw-all-files.txt
 # 代表ファイルを stage 相当にして pre-commit 全体を試走
@@ -506,12 +526,14 @@ lefthook run pre-commit --all-files
 - [ ] **Step 2: git log で 5 コミットが順に並ぶことを確認**
 
 Run:
+
 ```bash
 git log --oneline -6
 ```
 
 期待（新しい順）:
-```
+
+```text
 <sha> 📝 README: Development セクションを追加
 <sha> 👷 CI: auto-assign ワークフローを追加
 <sha> 🔧 lefthook: pre-commit フックを導入

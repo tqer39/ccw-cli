@@ -1,0 +1,67 @@
+# Lefthook configuration.
+# See https://lefthook.dev/configuration/ for details.
+pre-commit:
+  parallel: true
+  commands:
+    # ── セーフティ系 ──
+    check-added-large-files:
+      run: |
+        fail=0
+        for f in {staged_files}; do
+          [ -f "$f" ] || continue
+          sz=$(wc -c <"$f" 2>/dev/null || echo 0)
+          if [ "$sz" -gt 524288 ]; then
+            printf '❌ %s exceeds 512KB (%s bytes)\n' "$f" "$sz" >&2
+            fail=1
+          fi
+        done
+        exit "$fail"
+    detect-private-key:
+      run: |
+        hits=$(grep -lE '-----BEGIN [A-Z ]*PRIVATE KEY-----' {staged_files} 2>/dev/null || true)
+        if [ -n "$hits" ]; then
+          printf '❌ private key detected in:\n%s\n' "$hits" >&2
+          exit 1
+        fi
+
+    # ── Go ──
+    gofmt:
+      glob: "*.go"
+      run: |
+        out=$(gofmt -l {staged_files})
+        if [ -n "$out" ]; then
+          printf '❌ gofmt violations:\n%s\nRun: gofmt -w {staged_files}\n' "$out" >&2
+          exit 1
+        fi
+    golangci-lint:
+      glob: "*.go"
+      run: golangci-lint run {staged_files}
+
+    # ── Shell ──
+    shellcheck:
+      glob: "{*.sh,*.bash,*.bats,bin/ccw}"
+      run: shellcheck {staged_files}
+    shfmt:
+      glob: "{*.sh,*.bash,bin/ccw}"
+      run: shfmt -d -i 2 -ci -bn {staged_files}
+
+    # ── YAML / Actions ──
+    yamllint:
+      glob: "*.{yml,yaml}"
+      run: yamllint --no-warnings {staged_files}
+    actionlint:
+      glob: ".github/workflows/*.{yml,yaml}"
+      run: actionlint {staged_files}
+
+    # ── Markdown ──
+    markdownlint:
+      glob: "*.{md,markdown}"
+      run: npm exec -y --package=markdownlint-cli2 -- markdownlint-cli2 --fix {staged_files}
+      stage_fixed: true
+
+    # ── Renovate ──
+    renovate-config-validator:
+      glob: "renovate.json5"
+      run: npm exec -y --package=renovate -- renovate-config-validator {staged_files}
+
+# commit-msg / pre-push は現状不要。必要になったらここへ追加。

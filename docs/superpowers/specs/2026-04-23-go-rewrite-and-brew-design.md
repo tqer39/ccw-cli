@@ -37,7 +37,7 @@
 
 ### モジュール構成
 
-```
+```text
 github.com/tqer39/ccw-cli
 
 cmd/
@@ -103,7 +103,7 @@ go.mod / go.sum
 
 bash 版と同一（`--update` / `--uninstall` のみ削除）:
 
-```
+```text
 Usage: ccw [options] [-- <claude-args>...]
 
 Options:
