@@ -267,6 +267,41 @@ check_base_tool_or_exit() {
   exit 1
 }
 
+# ----------------------------------------------------------------------------
+# claude launch
+# ----------------------------------------------------------------------------
+# 新規 worktree で claude を起動する
+# $1: superpowers preamble (空文字なら preamble なし)
+# その後の引数: claude への pass-through 引数
+launch_claude_new() {
+  local preamble="$1"
+  shift
+  local -a extra
+  if [[ $# -gt 0 ]]; then
+    extra=("$@")
+  else
+    extra=()
+  fi
+
+  local -a cmd=(claude --permission-mode auto --worktree)
+  if [[ ${#extra[@]} -gt 0 ]]; then
+    cmd+=("${extra[@]}")
+  fi
+  if [[ -n "$preamble" ]]; then
+    cmd+=(-- "$preamble")
+  fi
+
+  "${cmd[@]}"
+}
+
+superpowers_preamble() {
+  cat <<'EOF'
+このセッションは Claude Code の --worktree sandbox 内です。
+superpowers:brainstorming → superpowers:writing-plans → superpowers:executing-plans
+の順で進めてください。トピックはこれから相談します。
+EOF
+}
+
 check_claude() {
   if command -v claude >/dev/null 2>&1; then
     return 0
@@ -382,9 +417,25 @@ main() {
   check_base_tool_or_exit "git" "https://git-scm.com/downloads"
   check_claude
 
-  info "main_repo: $main_repo"
-  error "launch flow not implemented yet"
-  exit 1
+  # main repo へ移動 (origin/HEAD 同期と claude 起動位置のため)
+  cd "$main_repo"
+
+  # origin/HEAD 同期 (失敗は無視)
+  git remote set-head origin -a >/dev/null 2>&1 || true
+
+  local preamble=""
+  if [[ $FLAG_SUPER -eq 1 ]]; then
+    preamble="$(superpowers_preamble)"
+  fi
+
+  # -n または -s → 新規 worktree
+  # (デフォルト picker は Task 14 で実装、暫定は新規起動にフォールバック)
+  if [[ ${#CLAUDE_ARGS[@]} -gt 0 ]]; then
+    launch_claude_new "$preamble" "${CLAUDE_ARGS[@]}"
+  else
+    launch_claude_new "$preamble"
+  fi
+  exit $?
 }
 
 main "$@"
