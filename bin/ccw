@@ -328,6 +328,52 @@ check_superpowers() {
   fi
 }
 
+# ----------------------------------------------------------------------------
+# gitignore check (for -s)
+# ----------------------------------------------------------------------------
+ensure_gitignore() {
+  local main_repo="$1"
+  # 既に ignore 対象なら何もしない
+  if (cd "$main_repo" && git check-ignore -q docs/superpowers/) 2>/dev/null; then
+    return 0
+  fi
+
+  local gitignore="$main_repo/.gitignore"
+  warn "docs/superpowers/ is not ignored by git."
+  info ""
+  info "superpowers skill は以下のファイルを生成します:"
+  info "  - docs/superpowers/specs/"
+  info "  - docs/superpowers/plans/"
+  info ""
+  info "The following block will be appended to $gitignore:"
+  info ""
+  info "  # superpowers workflow artifacts"
+  info "  docs/superpowers/"
+  info ""
+
+  if [[ ! -t 0 ]]; then
+    info "(non-interactive: skip without modifying)"
+    return 0
+  fi
+
+  local ans
+  read -rp "Add to .gitignore? [y/N]: " ans
+  case "$ans" in
+    y|Y|yes|YES) ;;
+    *) return 0 ;;
+  esac
+
+  if [[ -f "$gitignore" && -s "$gitignore" ]]; then
+    local last
+    last="$(tail -c 1 "$gitignore" 2>/dev/null || printf '')"
+    if [[ "$last" != $'\n' ]]; then
+      printf '\n' >> "$gitignore"
+    fi
+  fi
+  printf '\n# superpowers workflow artifacts\ndocs/superpowers/\n' >> "$gitignore"
+  success "Added to $gitignore"
+}
+
 superpowers_preamble() {
   cat <<'EOF'
 このセッションは Claude Code の --worktree sandbox 内です。
@@ -460,6 +506,7 @@ main() {
   local preamble=""
   if [[ $FLAG_SUPER -eq 1 ]]; then
     check_superpowers
+    ensure_gitignore "$main_repo"
     preamble="$(superpowers_preamble)"
   fi
 
