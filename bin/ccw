@@ -252,6 +252,61 @@ require_git_repo() {
 }
 
 # ----------------------------------------------------------------------------
+# dependency checks
+# ----------------------------------------------------------------------------
+# 基盤ツール (git/brew/npm): 欠落時に URL 案内して exit 1
+check_base_tool_or_exit() {
+  local tool="$1" url="$2"
+  if command -v "$tool" >/dev/null 2>&1; then
+    return 0
+  fi
+  warn "missing dependency: $tool"
+  info ""
+  info "Install it from the official page, then rerun ccw:"
+  info "  $url"
+  exit 1
+}
+
+check_claude() {
+  if command -v claude >/dev/null 2>&1; then
+    return 0
+  fi
+  warn "missing dependency: claude (Claude Code CLI)"
+  info ""
+  info "Choose installer:"
+  info "  [1] npm  (npm install -g @anthropic-ai/claude-code)"
+  info "  [2] brew (brew install claude-code)"
+  info "  [q] quit (install manually and rerun)"
+  info ""
+
+  if [[ ! -t 0 ]]; then
+    info "(non-interactive: cancelled)"
+    exit 1
+  fi
+
+  local choice
+  read -rp "Select [1/2/q]: " choice
+  case "$choice" in
+    1)
+      check_base_tool_or_exit "npm" "https://nodejs.org/"
+      info ""
+      info "Running: npm install -g @anthropic-ai/claude-code"
+      npm install -g @anthropic-ai/claude-code
+      ;;
+    2)
+      check_base_tool_or_exit "brew" "https://brew.sh"
+      info ""
+      info "Running: brew install claude-code"
+      brew install claude-code
+      ;;
+    *)
+      info "Cancelled."
+      exit 1
+      ;;
+  esac
+}
+
+# ----------------------------------------------------------------------------
 # argument parsing
 # ----------------------------------------------------------------------------
 # パース結果を以下のグローバル変数に設定する
@@ -323,6 +378,9 @@ main() {
     error "failed to resolve main repository root"
     exit 1
   }
+
+  check_base_tool_or_exit "git" "https://git-scm.com/downloads"
+  check_claude
 
   info "main_repo: $main_repo"
   error "launch flow not implemented yet"
