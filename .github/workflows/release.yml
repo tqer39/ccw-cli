@@ -22,6 +22,15 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Mint Homebrew tap token
+        id: tap-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.HOMEBREW_TAP_APP_ID }}
+          private-key: ${{ secrets.HOMEBREW_TAP_APP_PRIVATE_KEY }}
+          owner: tqer39
+          repositories: homebrew-tap
+
       - name: Run goreleaser
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -30,4 +39,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ steps.tap-token.outputs.token }}
