@@ -40,11 +40,10 @@ var installRunner = func() error {
 	return nil
 }
 
-// EnsureInstalled returns nil if superpowers is detected under home; otherwise
-// it prompts in interactive mode, or errors in non-interactive mode.
-// assumeYes is accepted for forward-compatibility (wired up in Task 3).
+// EnsureInstalled returns nil if superpowers is detected under home. Otherwise:
+//   - interactive && !assumeYes: prompts "Run now?" before installing
+//   - !interactive || assumeYes: auto-installs (with pre/post messages)
 func EnsureInstalled(in io.Reader, out io.Writer, home string, interactive, assumeYes bool) error {
-	_ = assumeYes // wired up in Task 3
 	ok, err := DetectInstalled(home)
 	if err != nil {
 		return err
@@ -58,8 +57,8 @@ func EnsureInstalled(in io.Reader, out io.Writer, home string, interactive, assu
 	_, _ = fmt.Fprintln(out, "  claude plugin install claude-plugins-official/superpowers")
 	_, _ = fmt.Fprintln(out, "(reference: https://docs.claude.com/en/docs/claude-code/plugins )")
 
-	if !interactive {
-		return errors.New("superpowers plugin not installed (non-interactive)")
+	if !interactive || assumeYes {
+		return autoInstall(out)
 	}
 
 	yes, err := ui.PromptYN(in, out, "Run now?")
@@ -72,5 +71,14 @@ func EnsureInstalled(in io.Reader, out io.Writer, home string, interactive, assu
 	if err := installRunner(); err != nil {
 		return fmt.Errorf("plugin install failed: %w", err)
 	}
+	return nil
+}
+
+func autoInstall(out io.Writer) error {
+	_, _ = fmt.Fprintln(out, "Installing superpowers plugin (claude plugin install claude-plugins-official/superpowers)…")
+	if err := installRunner(); err != nil {
+		return fmt.Errorf("plugin install failed: %w", err)
+	}
+	_, _ = fmt.Fprintln(out, "Installed superpowers plugin.")
 	return nil
 }
