@@ -90,6 +90,68 @@ func TestUpdateList_EnterOnWorktreeEntersMenu(t *testing.T) {
 	}
 }
 
+func selectFirstWorktree(m Model) Model {
+	next, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = next.(Model)
+	next, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	return next.(Model)
+}
+
+func TestMenu_ResumeEmitsQuit(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusPushed},
+	})
+	m = selectFirstWorktree(m)
+	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	m = next.(Model)
+	if m.Action() != ActionResume {
+		t.Errorf("Action = %s, want resume", m.Action())
+	}
+	if cmd == nil {
+		t.Error("r should emit tea.Quit")
+	}
+	if m.Selection().Branch != "x" || m.Selection().Path != "/a/.claude/worktrees/x" {
+		t.Errorf("Selection = %+v", m.Selection())
+	}
+}
+
+func TestMenu_BackReturnsToList(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusPushed},
+	})
+	m = selectFirstWorktree(m)
+	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'b'}})
+	m = next.(Model)
+	if m.state != stateList {
+		t.Errorf("state = %d, want stateList after back", m.state)
+	}
+}
+
+func TestMenu_DeleteEntersConfirm(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusDirty},
+	})
+	m = selectFirstWorktree(m)
+	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m = next.(Model)
+	if m.state != stateDeleteConfirm {
+		t.Errorf("state = %d, want stateDeleteConfirm", m.state)
+	}
+}
+
+func TestMenuView_ContainsSelectionSummary(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/feat-y", Branch: "feat-y", Status: worktree.StatusLocalOnly},
+	})
+	m = selectFirstWorktree(m)
+	out := m.View()
+	for _, want := range []string{"feat-y", "local-only", "[r]", "[d]", "[b]"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("menuView missing %q:\n%s", want, out)
+		}
+	}
+}
+
 func TestView_ListRendersItems(t *testing.T) {
 	m := New([]worktree.Info{
 		{Path: "/a/.claude/worktrees/feat-x", Branch: "feat-x", Status: worktree.StatusPushed},

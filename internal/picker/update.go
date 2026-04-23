@@ -59,10 +59,28 @@ func (m Model) updateList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// updateMenu is a stub filled in by Task 4.
 func (m Model) updateMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	_ = msg
+	switch msg.String() {
+	case "r", "R":
+		m.action = ActionResume
+		m.selection = m.currentSelection()
+		return m, tea.Quit
+	case "d", "D":
+		m.state = stateDeleteConfirm
+		return m, nil
+	case "b", "B", "esc":
+		m.state = stateList
+		return m, nil
+	case "q", "Q", "ctrl+c":
+		m.action = ActionCancel
+		return m, tea.Quit
+	}
 	return m, nil
+}
+
+func (m Model) currentSelection() Selection {
+	w := m.infos[m.selIdx]
+	return Selection{Path: w.Path, Branch: w.Branch, Status: w.Status}
 }
 
 // updateDeleteConfirm is a stub filled in by Task 5.
