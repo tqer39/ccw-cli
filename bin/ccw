@@ -671,9 +671,9 @@ tui_select_fallback() {
 
 superpowers_preamble() {
   cat <<'EOF'
-このセッションは Claude Code の --worktree sandbox 内です。
-superpowers:brainstorming → superpowers:writing-plans → superpowers:executing-plans
-の順で進めてください。トピックはこれから相談します。
+This session runs inside a Claude Code --worktree sandbox.
+Follow the workflow in order: superpowers:brainstorming → superpowers:writing-plans → superpowers:executing-plans.
+Wait for the user to introduce the topic.
 EOF
 }
 
