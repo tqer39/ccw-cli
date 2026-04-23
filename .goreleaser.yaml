@@ -1,0 +1,74 @@
+version: 2
+
+project_name: ccw
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: ccw
+    main: ./cmd/ccw
+    binary: ccw
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/tqer39/ccw-cli/internal/version.Version={{.Version}}
+      - -X github.com/tqer39/ccw-cli/internal/version.Commit={{.ShortCommit}}
+      - -X github.com/tqer39/ccw-cli/internal/version.Date={{.Date}}
+
+archives:
+  - id: ccw
+    ids: [ccw]
+    formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - "^style:"
+
+brews:
+  - name: ccw
+    ids: [ccw]
+    repository:
+      owner: tqer39
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/tqer39/ccw-cli"
+    description: "Launch Claude Code in an isolated git worktree"
+    license: "MIT"
+    commit_author:
+      name: goreleaser-bot
+      email: bot@goreleaser.com
+    install: |
+      bin.install "ccw"
+    test: |
+      system "#{bin}/ccw", "-v"
