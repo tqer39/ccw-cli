@@ -39,6 +39,11 @@ checksum:
   name_template: "checksums.txt"
   algorithm: sha256
 
+# workflow が先に `gh release create --draft` で release+tag を作るため、
+# goreleaser は既存 release に asset を append する方針にする。
+release:
+  mode: append
+
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
