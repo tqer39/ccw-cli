@@ -105,6 +105,27 @@ func TestList_FiltersCcwManagedOnly(t *testing.T) {
 	}
 }
 
+func TestList_FillsCounts(t *testing.T) {
+	main := initMainRepo(t)
+	addWorktree(t, main, "counts")
+
+	got, err := List(main)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(got) == 0 {
+		t.Fatal("want at least one worktree")
+	}
+	w := got[0]
+	// upstream 無し clean worktree なので ahead/behind/dirty すべて 0
+	if w.AheadCount != 0 || w.BehindCount != 0 {
+		t.Errorf("want 0/0 without upstream, got %d/%d", w.AheadCount, w.BehindCount)
+	}
+	if w.DirtyCount != 0 {
+		t.Errorf("clean worktree should have DirtyCount=0, got %d", w.DirtyCount)
+	}
+}
+
 func TestRemove_Integration(t *testing.T) {
 	main := initMainRepo(t)
 	wt := addWorktree(t, main, "d")

@@ -35,11 +35,17 @@ func (s Status) String() string {
 	}
 }
 
-// Info is a ccw-managed worktree entry with its classified status.
+// Info is a ccw-managed worktree entry with its classified status and
+// quantitative indicators (ahead/behind commits, dirty file count).
+// AheadCount/BehindCount are meaningful for StatusPushed and StatusLocalOnly.
+// DirtyCount is meaningful only when Status == StatusDirty.
 type Info struct {
-	Path   string
-	Branch string
-	Status Status
+	Path        string
+	Branch      string
+	Status      Status
+	AheadCount  int
+	BehindCount int
+	DirtyCount  int
 }
 
 const ccwPathMarker = "/.claude/worktrees/"
@@ -59,7 +65,15 @@ func List(mainRepo string) ([]Info, error) {
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, Info{Path: e.Path, Branch: e.Branch, Status: st})
+		info := Info{Path: e.Path, Branch: e.Branch, Status: st}
+		ahead, behind, _ := gitx.AheadBehind(e.Path)
+		info.AheadCount = ahead
+		info.BehindCount = behind
+		if st == StatusDirty {
+			n, _ := gitx.DirtyCount(e.Path)
+			info.DirtyCount = n
+		}
+		result = append(result, info)
 	}
 	return result, nil
 }

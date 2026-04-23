@@ -14,37 +14,38 @@ import (
 
 // Run displays the picker against mainRepo and returns the user's decision.
 // In non-interactive mode a numbered text fallback is used.
-func Run(mainRepo string, interactive bool, in io.Reader, out io.Writer) (Action, Selection, error) {
+func Run(mainRepo string, interactive bool, in io.Reader, out io.Writer) (Action, Selection, BulkDeletion, error) {
 	infos, err := worktree.List(mainRepo)
 	if err != nil {
-		return ActionCancel, Selection{}, fmt.Errorf("list worktrees: %w", err)
+		return ActionCancel, Selection{}, BulkDeletion{}, fmt.Errorf("list worktrees: %w", err)
 	}
 	if len(infos) == 0 {
-		return ActionNew, Selection{}, nil
+		return ActionNew, Selection{}, BulkDeletion{}, nil
 	}
 	if !interactive {
-		return runFallback(infos, in, out)
+		a, s, err := runFallback(infos, in, out)
+		return a, s, BulkDeletion{}, err
 	}
 	return runTUI(infos)
 }
 
-func runTUI(infos []worktree.Info) (Action, Selection, error) {
+func runTUI(infos []worktree.Info) (Action, Selection, BulkDeletion, error) {
 	p := tea.NewProgram(New(infos), tea.WithAltScreen())
 	final, err := p.Run()
 	if err != nil {
-		return ActionCancel, Selection{}, fmt.Errorf("picker run: %w", err)
+		return ActionCancel, Selection{}, BulkDeletion{}, fmt.Errorf("picker run: %w", err)
 	}
 	m, ok := final.(Model)
 	if !ok {
-		return ActionCancel, Selection{}, fmt.Errorf("picker: unexpected final model type %T", final)
+		return ActionCancel, Selection{}, BulkDeletion{}, fmt.Errorf("picker: unexpected final model type %T", final)
 	}
-	return m.Action(), m.Selection(), nil
+	return m.Action(), m.Selection(), m.Bulk(), nil
 }
 
 func runFallback(infos []worktree.Info, in io.Reader, out io.Writer) (Action, Selection, error) {
 	_, _ = fmt.Fprintln(out, "Select a worktree to resume:")
 	for i, w := range infos {
-		_, _ = fmt.Fprintf(out, "  %d) %s  (%s)  %s\n", i+1, w.Branch, w.Status, w.Path)
+		_, _ = fmt.Fprintf(out, "  %d) %s  (%s)  %s  %s\n", i+1, w.Branch, w.Status, fallbackIndicators(w), w.Path)
 	}
 	_, _ = fmt.Fprintln(out, "  n) new")
 	_, _ = fmt.Fprintln(out, "  q) quit")
@@ -68,4 +69,14 @@ func runFallback(infos []worktree.Info, in io.Reader, out io.Writer) (Action, Se
 	}
 	w := infos[n-1]
 	return ActionResume, Selection{Path: w.Path, Branch: w.Branch, Status: w.Status}, nil
+}
+
+// fallbackIndicators formats ahead/behind commit counts and dirty file count
+// for the plain-text fallback picker.
+func fallbackIndicators(w worktree.Info) string {
+	out := fmt.Sprintf("↑%d ↓%d", w.AheadCount, w.BehindCount)
+	if w.Status == worktree.StatusDirty && w.DirtyCount > 0 {
+		out += fmt.Sprintf(" ✎%d", w.DirtyCount)
+	}
+	return out
 }

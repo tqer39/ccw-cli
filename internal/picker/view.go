@@ -2,7 +2,10 @@ package picker
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/tqer39/ccw-cli/internal/gh"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
@@ -10,11 +13,19 @@ import (
 func (m Model) View() string {
 	switch m.state {
 	case stateList:
-		return m.list.View()
+		base := m.list.View()
+		if !gh.Available() {
+			return base + "\n\n💡 gh があったら PR 名も出せます"
+		}
+		return base
 	case stateMenu:
 		return m.menuView()
 	case stateDeleteConfirm:
 		return m.deleteConfirmView()
+	case stateBulkFilter:
+		return m.bulkFilterView()
+	case stateBulkConfirm:
+		return m.bulkConfirmView()
 	}
 	return ""
 }
@@ -37,4 +48,45 @@ func (m Model) deleteConfirmView() string {
 		"Delete worktree %s?\n  path:   %s\n  status: %s\n\nThis will run: %s\n\nConfirm? [y/N]\n",
 		w.Branch, w.Path, w.Status, cmd,
 	)
+}
+
+func (m Model) bulkFilterView() string {
+	var b strings.Builder
+	b.WriteString("Select statuses to delete (toggle):\n\n")
+	for _, s := range []worktree.Status{
+		worktree.StatusPushed, worktree.StatusLocalOnly, worktree.StatusDirty,
+	} {
+		mark := "[ ]"
+		if m.bulkFilter[s] {
+			mark = "[x]"
+		}
+		fmt.Fprintf(&b, "  %s %s\n", mark, s)
+	}
+	b.WriteString("\n  [p] pushed  [l] local-only  [d] dirty  [a] clear\n")
+	b.WriteString("  [enter] confirm  [q/esc] back\n")
+	return b.String()
+}
+
+func (m Model) bulkConfirmView() string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "Delete %d worktrees?\n\n", len(m.bulkTargets))
+	hasDirty := HasDirty(m.infos, m.bulkTargets)
+	dirtyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
+	for _, i := range m.bulkTargets {
+		w := m.infos[i]
+		line := fmt.Sprintf("  %s %s  %s\n", Badge(w.Status), w.Branch, w.Path)
+		if w.Status == worktree.StatusDirty && !noColor() {
+			line = dirtyStyle.Render(line)
+		}
+		b.WriteString(line)
+	}
+	if hasDirty {
+		b.WriteString("\n⚠ dirty worktree が含まれます。`git worktree remove --force` が必要です。\n")
+		b.WriteString("  [y] yes (include dirty, use --force)\n")
+		b.WriteString("  [s] skip dirty (remove clean only)\n")
+		b.WriteString("  [N] cancel\n")
+	} else {
+		b.WriteString("\nConfirm? [y/N]\n")
+	}
+	return b.String()
 }
