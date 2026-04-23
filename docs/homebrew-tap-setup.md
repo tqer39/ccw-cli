@@ -29,8 +29,8 @@ tap リポには `Formula/` ディレクトリだけ用意しておけば gorele
 ## 2. GitHub App を作成
 
 1. <https://github.com/settings/apps/new> を開く
-2. GitHub App name: `tqer39-homebrew-tap-writer`（GitHub 全体で一意。衝突したら suffix を付ける）
-3. Homepage URL: `https://github.com/tqer39/homebrew-tap`
+2. GitHub App name: `tqer39-gha-runner`（GitHub 全体で一意。衝突したら suffix を付ける）
+3. Homepage URL: `https://github.com/tqer39`
 4. Webhook: **Active のチェックを外す**（このユースケースでは不要）
 5. Repository permissions:
    - **Contents: Read and write**（formula push のため）
@@ -39,7 +39,7 @@ tap リポには `Formula/` ディレクトリだけ用意しておけば gorele
 6. Where can this GitHub App be installed?: **Only on this account**
 7. "Create GitHub App" を押す
 8. 作成後の設定画面で:
-   - **App ID** の数値をメモ（Step 4 で使用）
+   - **Client ID**（`Iv23li...` 形式の文字列）をメモ（Step 4 で使用）
    - "Private keys" セクションで **"Generate a private key"** を押して `.pem` をダウンロード（Step 4 で使用）
 
 ## 3. App を tap リポにインストール
@@ -55,18 +55,18 @@ App ID と private key だけで発行できる）。
 ## 4. ccw-cli の Actions secret に登録
 
 ```bash
-# App ID を登録（Step 2 でメモした数値）
-gh secret set HOMEBREW_TAP_APP_ID --repo tqer39/ccw-cli
-# プロンプトに App ID を貼り付け
+# Client ID を登録（Step 2 でメモした Iv23li... 文字列）
+gh secret set GHA_APP_CLIENT_ID --repo tqer39/ccw-cli
+# プロンプトに Client ID を貼り付け
 
 # Private key を登録（Step 2 でダウンロードした .pem ファイルの中身ごと）
-gh secret set HOMEBREW_TAP_APP_PRIVATE_KEY --repo tqer39/ccw-cli < /path/to/downloaded.pem
+gh secret set GHA_APP_PRIVATE_KEY --repo tqer39/ccw-cli < /path/to/downloaded.pem
 ```
 
 `gh secret list --repo tqer39/ccw-cli` に以下 2 つが出れば OK:
 
-- `HOMEBREW_TAP_APP_ID`
-- `HOMEBREW_TAP_APP_PRIVATE_KEY`
+- `GHA_APP_CLIENT_ID`
+- `GHA_APP_PRIVATE_KEY`
 
 ## 5. 動作確認（Phase 5 実施前）
 
@@ -88,6 +88,6 @@ make release-clean
 
 - **`Not Accessible by integration`**: App が tap リポにインストールされていない（Step 3 を再確認）
 - **`Bad credentials`**: `HOMEBREW_TAP_APP_PRIVATE_KEY` の改行が壊れている。`.pem` を `gh secret set ... < file` でリダイレクト登録すれば LF が維持される
-- **`App not found`**: `HOMEBREW_TAP_APP_ID` の値誤り。App 設定画面上部に表示される数値（先頭 6〜7 桁）を使う
+- **`App not found`**: `GHA_APP_CLIENT_ID` の値誤り。App 設定画面上部に表示される Client ID (`Iv23li...`) を使う
 - **tap リポの `Formula/` が無い**: Step 1 の `.gitkeep` push を先に済ませる
 - **タグ再打ち直し**: secret 未設定で tag push してしまった場合、`git tag -d v0.1.0 && git push origin :refs/tags/v0.1.0` で削除して再 push
