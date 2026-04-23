@@ -7,18 +7,18 @@ Claude Code worktree launcher — isolates each session in its own git worktree 
 - Launches Claude Code (`claude`) in a fresh git worktree each time (no state leakage)
 - Auto permission mode by default (no approval prompts)
 - Optional superpowers workflow injection (`brainstorming → writing-plans → executing-plans`) via `-s`
-- Interactive picker for leftover worktrees: resume, delete, or start new
-- Built-in self-update (`--update`) and uninstall (`--uninstall`)
+- Interactive picker for leftover worktrees: resume, delete, bulk delete, or start new
+- カラーバッジ + `↑N ↓M ✎N` インジケータ + PR 番号/タイトル (`gh` 導入時のみ)
+- 一括削除: picker メニュー or `--clean-all` CLI フラグ
 - Version display (`-v`)
 - Pass-through of native `claude` arguments after `--`
 
 ## Requirements
 
 - `git`
-- `bash` 3.2+ (macOS の `/bin/bash` でも動作)
-- `tput` (ncurses) — ほぼ常に標準装備
 - Claude Code CLI (`claude`) — 起動時に不在なら npm / brew から install するかを対話で選択
 - (Optional) superpowers plugin — `-s` 使用時に自動チェック
+- (Optional) `gh` CLI — picker に PR 番号/タイトルを表示（未導入でも picker は動作）
 
 ## Install
 
@@ -38,11 +38,16 @@ Usage: ccw [options] [-- <claude-args>...]
 
 Options:
   -n, --new            常に新規 worktree で起動（既存 worktree の選択をスキップ）
-  -s, --superpowers    superpowers プリアンブルを注入して起動
-      --update         ccw を最新版に更新
-      --uninstall      ccw 自身をアンインストール（symlink のみ）
+  -s, --superpowers    superpowers プリアンブルを注入して起動（暗黙に -n）
   -v, --version        バージョン情報を表示
   -h, --help           このヘルプを表示
+
+Bulk delete:
+      --clean-all        一括削除モード
+      --status=<filter>  all | pushed | local-only | dirty (default: all)
+      --force            dirty を --force で削除
+      --dry-run          対象だけ表示して終了
+  -y, --yes              確認プロンプトをスキップ
 
 Arguments after `--` are forwarded to `claude` verbatim.
 ```
@@ -50,12 +55,12 @@ Arguments after `--` are forwarded to `claude` verbatim.
 ### Examples
 
 ```bash
-ccw                            # 既存 worktree があれば選択、なければ新規起動
-ccw -n                         # 新規 worktree で起動 (picker スキップ)
-ccw -s                         # 新規 + superpowers プリアンブル
-ccw -- --model claude-opus-4-7 # claude へ引数パススルー
-ccw --update                   # 最新版へ更新
-ccw --uninstall                # アンインストール
+ccw                                       # 既存 worktree があれば選択、なければ新規起動
+ccw -n                                    # 新規 worktree で起動 (picker スキップ)
+ccw -s                                    # 新規 + superpowers プリアンブル
+ccw -- --model claude-opus-4-7            # claude へ引数パススルー
+ccw --clean-all --status=pushed --dry-run # 削除対象のプレビュー
+ccw --clean-all --status=all --force -y   # dirty 含む全 worktree を確認なしで削除
 ```
 
 ## Worktree picker
@@ -63,20 +68,34 @@ ccw --uninstall                # アンインストール
 `ccw` をオプションなしで起動すると、`.claude/worktrees/` 配下に残っている worktree を検出して選択 UI を表示します。
 
 ```text
-> 🟢 kahan        shimmying-frolicking-kahan  (pushed, clean)
-  🟡 pirate       playful-swashbuckling-ai    (local-only)
-  🔴 nebula       twinkling-starry-nebula     (dirty)
-  ➕ [new]        Start new worktree
-  🚪 [quit]       Cancel
+> [PUSHED] feat/login              ↑0 ↓0       #42 open "feat: add login"
+    ~/repo/.claude/worktrees/feat-login
+  [LOCAL]  feat/picker              ↑3 ↓1       (no PR)
+    ~/repo/.claude/worktrees/feat-picker
+  [DIRTY]  chore/cleanup            ↑0 ↓2 ✎5   #43 draft "chore: cleanup"
+    ~/repo/.claude/worktrees/chore-cleanup
+  🗑️  [delete all]
+  🧹  [clean pushed]
+  ☑️  [custom select]
+  ➕  [new]
+  🚪  [quit]
 ```
 
-| アイコン | 状態 |
+| バッジ | 状態 |
 |---|---|
-| 🟢 | `pushed`: upstream 追従、ahead 0、clean |
-| 🟡 | `local-only`: upstream なし or ahead あり |
-| 🔴 | `dirty`: working tree に未コミット変更あり |
+| `[PUSHED]` (緑) | upstream 追従、ahead 0、clean |
+| `[LOCAL]` (黄) | upstream なし or ahead あり |
+| `[DIRTY]` (赤) | working tree に未コミット変更あり |
 
-選択後、`resume` / `delete` / `back` を選ぶサブメニューに遷移します。
+インジケータ:
+
+- `↑N ↓M` — upstream からの ahead / behind コミット数
+- `✎N` — dirty ファイル数（`dirty` のみ）
+- `#N state "title"` — PR 番号 / 状態 / タイトル（`gh` 導入時のみ）
+
+worktree を選択すると `resume` / `delete` / `back` のサブメニューに遷移。`[delete all]` / `[clean pushed]` / `[custom select]` は複数 worktree をまとめて削除するショートカット。dirty を含む場合は確認ダイアログで `y` (force) / `s` (skip dirty) / `N` を選べます。
+
+`gh` が未導入の場合は PR 列が消え、footer に `💡 gh があったら PR 名も出せます` のヒントが出ます。導入済みで gh の呼び出しが失敗した場合（rate limit / ネットワークエラー 等）は PR 列のみ非表示にして静かにフォールバックします。
 
 ## Environment variables
 
@@ -92,20 +111,6 @@ ccw --uninstall                # アンインストール
 | `0` | 成功 |
 | `1` | ユーザーエラー / キャンセル（依存欠落、git repo 外、ユーザー拒否 等） |
 | その他 | `claude` コマンドの終了コードをそのまま透過 |
-
-## Update
-
-```bash
-ccw --update
-```
-
-## Uninstall
-
-```bash
-ccw --uninstall
-```
-
-symlink のみ削除されます。clone したリポジトリは `rm -rf <repo>` で手動削除してください。
 
 ## Development
 
@@ -124,8 +129,7 @@ lefthook install
 
 - `check-added-large-files`: 512KB 超のファイルをブロック
 - `detect-private-key`: 秘密鍵の混入を検出
-- `gofmt` / `golangci-lint`: Go ファイル対象（Phase 1 以降で有効化）
-- `shellcheck` / `shfmt`: bash スクリプト対象（`bin/ccw` / `tests/*.bats`）
+- `gofmt` / `golangci-lint`: Go ファイル対象
 - `yamllint` / `actionlint`: YAML / GitHub Actions ワークフロー対象
 - `markdownlint-cli2`: Markdown 対象
 - `renovate-config-validator`: `renovate.json5` のみ対象
