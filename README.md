@@ -65,6 +65,9 @@ Selecting a worktree opens `[r] run` / `[d] delete` / `[b] back`. `run` launches
 
 PR display requires [`gh`](https://cli.github.com/). Without `gh`, the picker stays functional and shows a hint; rate-limit / network failures hide the PR column silently.
 
+> ⚠️ **Passing `--resume` through `--` is unsupported.**
+> `ccw -n -- --resume ID` and `ccw -s -- --resume ID` combine `claude --worktree` (new worktree) with `--resume` (continue a prior session); the resumed transcript's file references won't match the freshly-created worktree. Even the picker's re-entry path suffers the same mismatch if the selected worktree differs from the session's original. If a resumed session is what you want, run `claude --resume ID` directly — bypass ccw.
+
 ## 📦 Installation
 
 ### Homebrew (recommended)
