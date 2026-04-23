@@ -198,8 +198,5 @@ lefthook-local.yml
 .lefthook-local/
 
 
-# superpowers workflow artifacts
-docs/superpowers/
-
 # ccw-managed worktrees (the tool's own runtime output)
 .claude/worktrees/
