@@ -59,7 +59,7 @@ jobs:
 
       - name: Mint Homebrew tap token
         id: tap-token
-        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
         with:
           app-id: ${{ secrets.GHA_APP_CLIENT_ID }}
           private-key: ${{ secrets.GHA_APP_PRIVATE_KEY }}
