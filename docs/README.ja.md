@@ -27,6 +27,8 @@ ccw
 
 これだけ。`ccw` は `.claude/worktrees/` を走査して picker を表示し、worktree が無ければ新規作成します。
 
+> `ccw` は worktree 内から起動しても動作します — `git rev-parse --git-common-dir` で main repo を解決してそこを基準に動くので、プロジェクトルートに `cd` し直す必要はありません。
+
 ## ✨ 特長
 
 - 🌳 **セッション分離** — `claude` 起動ごとに専用 git worktree

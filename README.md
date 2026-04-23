@@ -27,6 +27,8 @@ ccw
 
 That's it. `ccw` scans `.claude/worktrees/` and shows the picker, or spins up a fresh worktree if none exist.
 
+> `ccw` also works from inside a worktree — it resolves the main repo via `git rev-parse --git-common-dir` and operates there, so you don't need to `cd` back to the project root first.
+
 ## ✨ Features
 
 - 🌳 **Isolated sessions** — each `claude` run gets its own git worktree
