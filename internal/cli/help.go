@@ -18,7 +18,7 @@ Bulk delete:
       --status=<filter>  all | pushed | local-only | dirty (default: all)
       --force            Delete dirty worktrees with --force
       --dry-run          Print targets and exit
-  -y, --yes              Skip confirmation prompt
+  -y, --yes              Skip confirmation prompts (--clean-all, -s plugin install)
 
 Arguments after ` + "`--`" + ` are forwarded to ` + "`claude`" + ` verbatim.
 

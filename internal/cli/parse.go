@@ -40,7 +40,7 @@ func Parse(argv []string) (Flags, error) {
 	fs.StringVar(&f.StatusFilter, "status", "", "status filter: all | pushed | local-only | dirty (default all)")
 	fs.BoolVar(&f.Force, "force", false, "allow --force removal of dirty worktrees")
 	fs.BoolVar(&f.DryRun, "dry-run", false, "list targets without deleting")
-	fs.BoolVarP(&f.AssumeYes, "yes", "y", false, "skip confirmation prompt")
+	fs.BoolVarP(&f.AssumeYes, "yes", "y", false, "skip confirmation prompts (--clean-all, -s plugin install)")
 
 	if err := fs.Parse(pre); err != nil {
 		return Flags{}, fmt.Errorf("parse flags: %w", err)
