@@ -2,7 +2,7 @@
 
 ![ccw-cli — Claude Code x worktree](assets/header.png)
 
-**[Claude Code](https://docs.claude.com/claude-code) を独立した git worktree で起動 — 状態の混線なし、切り替えストレスなし。**
+**[Claude Code](https://docs.claude.com/claude-code) 標準の `--worktree` を薄くラップするランチャー — リポジトリのどこからでも `ccw` と打てば、既存の worktree を PR 情報付きで選択・起動できます（無ければ新規作成）。単体 CLI なので tmux/zellij と競合しません。**
 
 [![Go](https://img.shields.io/badge/go-1.25-00ADD8?logo=go&logoColor=white)](../go.mod)
 [![Release](https://img.shields.io/github/v/release/tqer39/ccw-cli?logo=github)](https://github.com/tqer39/ccw-cli/releases)
