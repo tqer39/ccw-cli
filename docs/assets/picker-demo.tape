@@ -7,15 +7,15 @@ Set Height 780
 Set Padding 28
 Set Theme "Catppuccin Mocha"
 Set TypingSpeed 110ms
-Set PlaybackSpeed 0.5
+Set PlaybackSpeed 0.8
 
 Hide
-Type "cd /tmp/ccw-demo && export PATH=/tmp/fake-gh:$PATH && clear"
+Type "cd /tmp/ccw-demo && export PATH=/tmp/ccw-demo-bin:/tmp/fake-gh:$PATH && clear"
 Enter
 Sleep 800ms
 Show
 
-Type "/tmp/ccw-demo-bin"
+Type "ccw"
 Enter
 Sleep 4500ms
 
