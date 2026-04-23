@@ -1,0 +1,5 @@
+[
+  {"number": 12, "title": "Add picker mod", "state": "MERGED", "headRefName": "shimmying-frolicking-kahan"},
+  {"number": 42, "title": "Fix picker UI", "state": "OPEN", "headRefName": "playful-swashbuckling-ai"},
+  {"number": 7, "title": "Closed PR", "state": "CLOSED", "headRefName": "stale-branch"}
+]
