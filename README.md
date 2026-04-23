@@ -2,7 +2,7 @@
 
 ![ccw-cli — Claude Code x worktree](docs/assets/header.png)
 
-**Launch [Claude Code](https://docs.claude.com/claude-code) in an isolated git worktree — no state leakage, no switching headaches.**
+**A thin launcher for [Claude Code](https://docs.claude.com/claude-code)'s built-in `--worktree` — run `ccw` anywhere in the repo to pick an existing worktree (PR info attached) or start fresh. Plain CLI, stays out of your tmux/zellij setup.**
 
 [![Go](https://img.shields.io/badge/go-1.25-00ADD8?logo=go&logoColor=white)](go.mod)
 [![Release](https://img.shields.io/github/v/release/tqer39/ccw-cli?logo=github)](https://github.com/tqer39/ccw-cli/releases)
