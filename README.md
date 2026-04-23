@@ -1,5 +1,7 @@
 # ccw
 
+![ccw-cli — Claude Code x worktree](docs/assets/header.png)
+
 Claude Code worktree launcher — isolates each session in its own git worktree with opinionated defaults.
 
 ## Features
@@ -74,6 +76,8 @@ ccw --clean-all --status=all --force -y   # Delete every worktree (incl. dirty) 
 ## Worktree picker
 
 Running `ccw` with no arguments scans `.claude/worktrees/` for leftover worktrees and shows the picker:
+
+![ccw picker demo](docs/assets/picker-demo.gif)
 
 ```text
 > [PUSHED] feat/login              ↑0 ↓0       #42 open "feat: add login"
