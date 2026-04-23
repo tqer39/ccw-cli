@@ -29,8 +29,8 @@ tap リポには `Formula/` ディレクトリだけ用意しておけば gorele
 ## 2. GitHub App を作成
 
 1. <https://github.com/settings/apps/new> を開く
-2. GitHub App name: `tqer39-homebrew-tap-writer`（GitHub 全体で一意。衝突したら suffix を付ける）
-3. Homepage URL: `https://github.com/tqer39/homebrew-tap`
+2. GitHub App name: `tqer39-gha-runner`（GitHub 全体で一意。衝突したら suffix を付ける）
+3. Homepage URL: `https://github.com/tqer39`
 4. Webhook: **Active のチェックを外す**（このユースケースでは不要）
 5. Repository permissions:
    - **Contents: Read and write**（formula push のため）
@@ -40,6 +40,7 @@ tap リポには `Formula/` ディレクトリだけ用意しておけば gorele
 7. "Create GitHub App" を押す
 8. 作成後の設定画面で:
    - **App ID** の数値をメモ（Step 4 で使用）
+   - **Client ID**（`Iv23li...` 形式の文字列）をメモ（Step 4 で使用）
    - "Private keys" セクションで **"Generate a private key"** を押して `.pem` をダウンロード（Step 4 で使用）
 
 ## 3. App を tap リポにインストール
@@ -56,17 +57,25 @@ App ID と private key だけで発行できる）。
 
 ```bash
 # App ID を登録（Step 2 でメモした数値）
-gh secret set HOMEBREW_TAP_APP_ID --repo tqer39/ccw-cli
+gh secret set GHA_APP_ID --repo tqer39/ccw-cli
 # プロンプトに App ID を貼り付け
 
+# Client ID を登録（Step 2 でメモした Iv23li... 文字列）
+gh secret set GHA_APP_CLIENT_ID --repo tqer39/ccw-cli
+# プロンプトに Client ID を貼り付け
+
 # Private key を登録（Step 2 でダウンロードした .pem ファイルの中身ごと）
-gh secret set HOMEBREW_TAP_APP_PRIVATE_KEY --repo tqer39/ccw-cli < /path/to/downloaded.pem
+gh secret set GHA_APP_PRIVATE_KEY --repo tqer39/ccw-cli < /path/to/downloaded.pem
 ```
 
-`gh secret list --repo tqer39/ccw-cli` に以下 2 つが出れば OK:
+`gh secret list --repo tqer39/ccw-cli` に以下 3 つが出れば OK:
 
-- `HOMEBREW_TAP_APP_ID`
-- `HOMEBREW_TAP_APP_PRIVATE_KEY`
+- `GHA_APP_ID`
+- `GHA_APP_CLIENT_ID`
+- `GHA_APP_PRIVATE_KEY`
+
+release.yml が実際に使うのは `GHA_APP_CLIENT_ID` + `GHA_APP_PRIVATE_KEY` の 2 つ。
+`GHA_APP_ID` は他ワークフロー互換・トラブルシューティング用に併置している。
 
 ## 5. 動作確認（Phase 5 実施前）
 
