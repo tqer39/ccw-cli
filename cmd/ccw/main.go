@@ -49,6 +49,10 @@ func run(flags cli.Flags) int {
 
 	interactive := ui.IsInteractive(os.Stdin) && ui.IsInteractive(os.Stdout)
 
+	if flags.CleanAll {
+		return runCleanAll(mainRepo, flags, interactive)
+	}
+
 	if err := claude.EnsureInstalled(os.Stdin, os.Stderr, interactive); err != nil {
 		ui.Error("%v", err)
 		return 1
@@ -80,7 +84,7 @@ func run(flags cli.Flags) int {
 
 func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 	for {
-		action, sel, err := picker.Run(mainRepo, interactive, os.Stdin, os.Stderr)
+		action, sel, bulk, err := picker.Run(mainRepo, interactive, os.Stdin, os.Stderr)
 		if err != nil {
 			ui.Error("%v", err)
 			return 1
@@ -108,8 +112,109 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 				return 1
 			}
 			ui.Success("Removed %s", sel.Path)
+		case picker.ActionBulkDelete:
+			if code := applyBulkDelete(mainRepo, bulk); code != 0 {
+				return code
+			}
 		}
 	}
+}
+
+func applyBulkDelete(mainRepo string, bulk picker.BulkDeletion) int {
+	errs := 0
+	for _, p := range bulk.Paths {
+		if err := worktree.Remove(mainRepo, p, bulk.Force); err != nil {
+			ui.Error("remove %s: %v", p, err)
+			errs++
+			continue
+		}
+		ui.Success("Removed %s", p)
+	}
+	if errs > 0 {
+		return 1
+	}
+	return 0
+}
+
+func runCleanAll(mainRepo string, flags cli.Flags, interactive bool) int {
+	infos, err := worktree.List(mainRepo)
+	if err != nil {
+		ui.Error("list worktrees: %v", err)
+		return 1
+	}
+	if len(infos) == 0 {
+		ui.Info("no ccw worktrees to clean.")
+		return 0
+	}
+
+	filter := statusFilterMap(flags.StatusFilter)
+	targets := picker.SelectByStatus(infos, filter)
+
+	if !flags.Force && picker.HasDirty(infos, targets) {
+		targets = picker.DropDirty(infos, targets)
+		ui.Warn("skipping dirty worktrees (use --force to include)")
+	}
+
+	if len(targets) == 0 {
+		ui.Info("no worktrees matched the filter.")
+		return 0
+	}
+
+	if flags.DryRun {
+		ui.Info("would remove %d worktree(s):", len(targets))
+		for _, i := range targets {
+			w := infos[i]
+			ui.Info("  %s  (%s)  %s", w.Branch, w.Status, w.Path)
+		}
+		return 0
+	}
+
+	if !flags.AssumeYes {
+		if !interactive {
+			ui.Error("--clean-all in non-interactive mode requires -y/--yes")
+			return 1
+		}
+		if !confirmCleanAll(infos, targets) {
+			ui.Info("aborted.")
+			return 0
+		}
+	}
+
+	bulk := picker.BulkDeletion{
+		Paths: make([]string, 0, len(targets)),
+		Force: flags.Force,
+	}
+	for _, i := range targets {
+		bulk.Paths = append(bulk.Paths, infos[i].Path)
+	}
+	return applyBulkDelete(mainRepo, bulk)
+}
+
+func statusFilterMap(s string) map[worktree.Status]bool {
+	switch s {
+	case "pushed":
+		return map[worktree.Status]bool{worktree.StatusPushed: true}
+	case "local-only":
+		return map[worktree.Status]bool{worktree.StatusLocalOnly: true}
+	case "dirty":
+		return map[worktree.Status]bool{worktree.StatusDirty: true}
+	default:
+		return nil
+	}
+}
+
+func confirmCleanAll(infos []worktree.Info, targets []int) bool {
+	ui.Info("will remove %d worktree(s):", len(targets))
+	for _, i := range targets {
+		w := infos[i]
+		ui.Info("  %s  (%s)  %s", w.Branch, w.Status, w.Path)
+	}
+	ok, err := ui.PromptYN(os.Stdin, os.Stderr, "proceed?")
+	if err != nil {
+		ui.Error("%v", err)
+		return false
+	}
+	return ok
 }
 
 func resolveMainRepo() (string, error) {

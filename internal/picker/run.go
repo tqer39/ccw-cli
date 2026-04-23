@@ -14,31 +14,32 @@ import (
 
 // Run displays the picker against mainRepo and returns the user's decision.
 // In non-interactive mode a numbered text fallback is used.
-func Run(mainRepo string, interactive bool, in io.Reader, out io.Writer) (Action, Selection, error) {
+func Run(mainRepo string, interactive bool, in io.Reader, out io.Writer) (Action, Selection, BulkDeletion, error) {
 	infos, err := worktree.List(mainRepo)
 	if err != nil {
-		return ActionCancel, Selection{}, fmt.Errorf("list worktrees: %w", err)
+		return ActionCancel, Selection{}, BulkDeletion{}, fmt.Errorf("list worktrees: %w", err)
 	}
 	if len(infos) == 0 {
-		return ActionNew, Selection{}, nil
+		return ActionNew, Selection{}, BulkDeletion{}, nil
 	}
 	if !interactive {
-		return runFallback(infos, in, out)
+		a, s, err := runFallback(infos, in, out)
+		return a, s, BulkDeletion{}, err
 	}
 	return runTUI(infos)
 }
 
-func runTUI(infos []worktree.Info) (Action, Selection, error) {
+func runTUI(infos []worktree.Info) (Action, Selection, BulkDeletion, error) {
 	p := tea.NewProgram(New(infos), tea.WithAltScreen())
 	final, err := p.Run()
 	if err != nil {
-		return ActionCancel, Selection{}, fmt.Errorf("picker run: %w", err)
+		return ActionCancel, Selection{}, BulkDeletion{}, fmt.Errorf("picker run: %w", err)
 	}
 	m, ok := final.(Model)
 	if !ok {
-		return ActionCancel, Selection{}, fmt.Errorf("picker: unexpected final model type %T", final)
+		return ActionCancel, Selection{}, BulkDeletion{}, fmt.Errorf("picker: unexpected final model type %T", final)
 	}
-	return m.Action(), m.Selection(), nil
+	return m.Action(), m.Selection(), m.Bulk(), nil
 }
 
 func runFallback(infos []worktree.Info, in io.Reader, out io.Writer) (Action, Selection, error) {

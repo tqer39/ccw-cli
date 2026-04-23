@@ -102,6 +102,36 @@ func TestParse_Table(t *testing.T) {
 			argv:    []string{"positional"},
 			wantErr: true,
 		},
+		{
+			name: "clean-all default all",
+			argv: []string{"--clean-all"},
+			want: Flags{CleanAll: true, StatusFilter: "all"},
+		},
+		{
+			name: "clean-all pushed",
+			argv: []string{"--clean-all", "--status=pushed"},
+			want: Flags{CleanAll: true, StatusFilter: "pushed"},
+		},
+		{
+			name:    "clean-all dirty without force",
+			argv:    []string{"--clean-all", "--status=dirty"},
+			wantErr: true,
+		},
+		{
+			name: "clean-all dirty with force",
+			argv: []string{"--clean-all", "--status=dirty", "--force"},
+			want: Flags{CleanAll: true, StatusFilter: "dirty", Force: true},
+		},
+		{
+			name:    "clean-all invalid status",
+			argv:    []string{"--clean-all", "--status=foo"},
+			wantErr: true,
+		},
+		{
+			name: "clean-all dry-run yes",
+			argv: []string{"--clean-all", "--dry-run", "-y"},
+			want: Flags{CleanAll: true, StatusFilter: "all", DryRun: true, AssumeYes: true},
+		},
 	}
 
 	for _, tc := range cases {

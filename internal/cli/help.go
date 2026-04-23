@@ -13,6 +13,13 @@ Options:
   -v, --version        バージョン情報を表示
   -h, --help           このヘルプを表示
 
+Bulk delete:
+      --clean-all        一括削除モード
+      --status=<filter>  all | pushed | local-only | dirty (default: all)
+      --force            dirty を --force で削除
+      --dry-run          対象だけ表示して終了
+  -y, --yes              確認プロンプトをスキップ
+
 Arguments after ` + "`--`" + ` are forwarded to ` + "`claude`" + ` verbatim.
 
 Environment:
