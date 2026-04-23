@@ -8,10 +8,12 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tqer39/ccw-cli/internal/gh"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
-// rowDelegate renders items as two lines: badge/branch/indicators/PR on top, path below.
+// rowDelegate renders items as two lines: meta (badge/branch/indicators/→/PR)
+// on top, path below.
 type rowDelegate struct {
 	prUnavailable bool
 }
@@ -27,6 +29,15 @@ func (d rowDelegate) Render(w io.Writer, m list.Model, index int, item list.Item
 	}
 	selected := index == m.Index()
 	_, _ = fmt.Fprint(w, renderRow(li, m.Width(), d.prUnavailable, selected))
+}
+
+// arrowGlyph returns the worktree→PR separator. ASCII `->` under NO_COLOR
+// keeps width predictable across terminals without Unicode.
+func arrowGlyph() string {
+	if noColor() {
+		return "->"
+	}
+	return "→"
 }
 
 // renderRow is a pure function used by the delegate and tests.
@@ -45,23 +56,33 @@ func renderRow(li listItem, width int, prUnavailable bool, selected bool) string
 	if wt.Status == worktree.StatusDirty {
 		indicators += fmt.Sprintf(" ✎%d", wt.DirtyCount)
 	}
-	var pr string
+
+	meta := strings.TrimRight(fmt.Sprintf("%s%s  %-24s %s", prefix, badge, wt.Branch, indicators), " ")
+	top := meta
 	if !prUnavailable {
-		if li.pr != nil {
-			title := li.pr.Title
-			if len(title) > 30 {
-				title = title[:29] + "…"
-			}
-			pr = fmt.Sprintf("#%d %s \"%s\"", li.pr.Number, strings.ToLower(li.pr.State), title)
-		} else {
-			pr = "(no PR)"
-		}
+		top = meta + "  " + arrowGlyph() + "  " + renderPRCell(li.pr)
 	}
-	top := strings.TrimRight(fmt.Sprintf("%s%s  %-24s %s  %s", prefix, badge, wt.Branch, indicators, pr), " ")
 	if width > 0 && lipgloss.Width(top) > width {
 		top = truncateToWidth(top, width)
 	}
 	return top + "\n  " + wt.Path
+}
+
+// renderPRCell builds the PR portion of the row: either a state-tinted
+// `[STATE] #N "title"` cell or a dim `(no PR)` placeholder.
+func renderPRCell(pr *gh.PRInfo) string {
+	if pr == nil {
+		if noColor() {
+			return "(no PR)"
+		}
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("(no PR)")
+	}
+	title := pr.Title
+	if len(title) > 30 {
+		title = title[:29] + "…"
+	}
+	inner := fmt.Sprintf("%s #%d %q", PRBadge(pr.State), pr.Number, title)
+	return PRCellStyle(pr.State).Render(inner)
 }
 
 // truncateToWidth trims the visible width of s to n cells.
