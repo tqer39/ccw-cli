@@ -32,7 +32,7 @@ func (m Model) View() string {
 func (m Model) menuView() string {
 	w := m.infos[m.selIdx]
 	return fmt.Sprintf(
-		"Selected: %s (%s)\nPath:     %s\n\nWhat to do?\n  [r] resume — open claude in this worktree\n  [d] delete — remove the worktree\n  [b] back   — return to list\n  [q] quit   — cancel\n",
+		"Selected: %s (%s)\nPath:     %s\n\nWhat to do?\n  [r] run    — start claude in this worktree\n  [d] delete — remove the worktree\n  [b] back   — return to list\n  [q] quit   — cancel\n",
 		w.Branch, w.Status, w.Path,
 	)
 }

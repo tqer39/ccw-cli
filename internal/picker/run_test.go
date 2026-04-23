@@ -22,7 +22,7 @@ func TestRunFallback_Resume(t *testing.T) {
 		t.Fatalf("runFallback: %v", err)
 	}
 	if a != ActionResume || s.Branch != "y" {
-		t.Errorf("got (%s, %+v), want (resume, y)", a, s)
+		t.Errorf("got (%s, %+v), want (run, y)", a, s)
 	}
 }
 
@@ -96,7 +96,7 @@ func TestTUI_ResumeFirstWorktree(t *testing.T) {
 		t.Fatal("FinalModel is not Model")
 	}
 	if final.Action() != ActionResume {
-		t.Errorf("Action = %s, want resume", final.Action())
+		t.Errorf("Action = %s, want run", final.Action())
 	}
 	if final.Selection().Branch != "feat" {
 		t.Errorf("Selection.Branch = %q, want feat", final.Selection().Branch)
