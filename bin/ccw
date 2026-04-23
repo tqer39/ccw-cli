@@ -47,26 +47,26 @@ Usage: ccw [options] [-- <claude-args>...]
 Claude Code worktree launcher.
 
 Options:
-  -n, --new            常に新規 worktree で起動（既存 worktree の選択をスキップ）
-  -s, --superpowers    superpowers プリアンブルを注入して起動
-      --update         ccw を最新版に更新
-      --uninstall      ccw 自身をアンインストール
-  -v, --version        バージョン情報を表示
-  -h, --help           このヘルプを表示
+  -n, --new            Always start a new worktree (skip picker)
+  -s, --superpowers    Inject superpowers preamble (implies -n)
+      --update         Update ccw to the latest version
+      --uninstall      Uninstall ccw itself
+  -v, --version        Show version
+  -h, --help           Show this help
 
 Arguments after `--` are forwarded to `claude` verbatim.
 
 Examples:
-  ccw                            既存 worktree があれば選択、なければ新規起動
-  ccw -n                         既存を無視して新規 worktree で起動
-  ccw -s                         新規 worktree + superpowers
-  ccw -- --model claude-opus-4-7 claude へ引数をパススルー
-  ccw --update                   リモートから pull
-  ccw --uninstall                ccw を削除
+  ccw                            Pick an existing worktree, or start a new one
+  ccw -n                         Start a new worktree (ignore existing)
+  ccw -s                         New worktree + superpowers
+  ccw -- --model claude-opus-4-7 Forward arguments to claude
+  ccw --update                   Pull from remote
+  ccw --uninstall                Remove ccw
 
 Environment:
-  NO_COLOR=1       カラー出力を無効化
-  CCW_DEBUG=1      詳細ログ出力 (set -x)
+  NO_COLOR=1       Disable colored output
+  CCW_DEBUG=1      Verbose debug logging (set -x)
 
 Exit codes:
   0  success
