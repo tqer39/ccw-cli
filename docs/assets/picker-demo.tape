@@ -2,7 +2,7 @@ Output "/tmp/ccw-demo.gif"
 
 Set Shell "bash"
 Set FontSize 24
-Set Width 1024
+Set Width 1440
 Set Height 640
 Set Padding 20
 Set Theme "Catppuccin Mocha"
