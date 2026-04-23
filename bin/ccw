@@ -316,7 +316,7 @@ check_superpowers() {
   info "The following command will install it:"
   info "  claude plugin install claude-plugins-official/superpowers"
   info ""
-  info "(※ 正式コマンドは未確定。失敗する場合は手動でプラグインを追加してください。"
+  info "(Note: the official command is not yet finalized. If it fails, install the plugin manually."
   info "    reference: https://docs.claude.com/en/docs/claude-code/plugins )"
   info ""
 
@@ -354,7 +354,7 @@ ensure_gitignore() {
   local gitignore="$main_repo/.gitignore"
   warn "docs/superpowers/ is not ignored by git."
   info ""
-  info "superpowers skill は以下のファイルを生成します:"
+  info "The superpowers skill generates the following files:"
   info "  - docs/superpowers/specs/"
   info "  - docs/superpowers/plans/"
   info ""
