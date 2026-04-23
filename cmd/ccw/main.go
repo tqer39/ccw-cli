@@ -1,8 +1,7 @@
 // Command ccw launches Claude Code in an isolated git worktree.
 //
-// Phase 2 status: -n / -s の直起動パスが機能。無印起動 (picker) は
-// Phase 3 で実装予定で、それまでは "未実装" を出して exit 1。
-// bash 版 bin/ccw は picker が必要なユースケース向けに温存されている。
+// Phase 3 status: -h / -v / -n / -s / picker が bash 版とパリティ。
+// bash 版 bin/ccw は移行期のフォールバックとして温存。
 package main
 
 import (
@@ -12,9 +11,11 @@ import (
 	"github.com/tqer39/ccw-cli/internal/claude"
 	"github.com/tqer39/ccw-cli/internal/cli"
 	"github.com/tqer39/ccw-cli/internal/gitx"
+	"github.com/tqer39/ccw-cli/internal/picker"
 	"github.com/tqer39/ccw-cli/internal/superpowers"
 	"github.com/tqer39/ccw-cli/internal/ui"
 	"github.com/tqer39/ccw-cli/internal/version"
+	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
 func main() {
@@ -74,8 +75,41 @@ func run(flags cli.Flags) int {
 		return code
 	}
 
-	ui.Error("Phase 2: picker 未実装。`-n` を指定するか bash 版 bin/ccw を使用してください。")
-	return 1
+	return runPicker(mainRepo, flags.Passthrough, interactive)
+}
+
+func runPicker(mainRepo string, passthrough []string, interactive bool) int {
+	for {
+		action, sel, err := picker.Run(mainRepo, interactive, os.Stdin, os.Stderr)
+		if err != nil {
+			ui.Error("%v", err)
+			return 1
+		}
+		switch action {
+		case picker.ActionCancel:
+			return 0
+		case picker.ActionNew:
+			code, err := claude.LaunchNew(mainRepo, "", passthrough)
+			if err != nil {
+				ui.Error("%v", err)
+				return 1
+			}
+			return code
+		case picker.ActionResume:
+			code, err := claude.Resume(sel.Path, passthrough)
+			if err != nil {
+				ui.Error("%v", err)
+				return 1
+			}
+			return code
+		case picker.ActionDelete:
+			if err := worktree.Remove(mainRepo, sel.Path, sel.ForceDelete); err != nil {
+				ui.Error("%v", err)
+				return 1
+			}
+			ui.Success("Removed %s", sel.Path)
+		}
+	}
 }
 
 func resolveMainRepo() (string, error) {
