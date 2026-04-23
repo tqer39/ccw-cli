@@ -59,7 +59,7 @@ func TestEnsureInstalled_Present(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	if err := EnsureInstalled(strings.NewReader(""), &out, home, true); err != nil {
+	if err := EnsureInstalled(strings.NewReader(""), &out, home, true, false); err != nil {
 		t.Errorf("EnsureInstalled present = %v, want nil", err)
 	}
 	if out.Len() != 0 {
@@ -70,7 +70,7 @@ func TestEnsureInstalled_Present(t *testing.T) {
 func TestEnsureInstalled_MissingNonInteractive(t *testing.T) {
 	home := t.TempDir()
 	var out bytes.Buffer
-	err := EnsureInstalled(strings.NewReader(""), &out, home, false)
+	err := EnsureInstalled(strings.NewReader(""), &out, home, false, false)
 	if err == nil {
 		t.Fatal("EnsureInstalled missing non-interactive: want error")
 	}
@@ -79,7 +79,7 @@ func TestEnsureInstalled_MissingNonInteractive(t *testing.T) {
 func TestEnsureInstalled_UserCancels(t *testing.T) {
 	home := t.TempDir()
 	var out bytes.Buffer
-	err := EnsureInstalled(strings.NewReader("n\n"), &out, home, true)
+	err := EnsureInstalled(strings.NewReader("n\n"), &out, home, true, false)
 	if err == nil {
 		t.Fatal("EnsureInstalled user-cancel: want error")
 	}
@@ -93,7 +93,7 @@ func TestEnsureInstalled_InstallSucceeds(t *testing.T) {
 	t.Cleanup(func() { installRunner = orig })
 
 	var out bytes.Buffer
-	if err := EnsureInstalled(strings.NewReader("y\n"), &out, home, true); err != nil {
+	if err := EnsureInstalled(strings.NewReader("y\n"), &out, home, true, false); err != nil {
 		t.Fatalf("EnsureInstalled success: %v", err)
 	}
 	if !called {
@@ -108,7 +108,7 @@ func TestEnsureInstalled_InstallFails(t *testing.T) {
 	t.Cleanup(func() { installRunner = orig })
 
 	var out bytes.Buffer
-	err := EnsureInstalled(strings.NewReader("y\n"), &out, home, true)
+	err := EnsureInstalled(strings.NewReader("y\n"), &out, home, true, false)
 	if err == nil {
 		t.Fatal("EnsureInstalled install-fail: want error")
 	}

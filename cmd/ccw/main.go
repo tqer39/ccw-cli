@@ -245,7 +245,7 @@ func maybeSuperpowers(enabled bool, mainRepo string, interactive bool) (string, 
 	if err != nil {
 		return "", fmt.Errorf("resolve HOME: %w", err)
 	}
-	if err := superpowers.EnsureInstalled(os.Stdin, os.Stderr, home, interactive); err != nil {
+	if err := superpowers.EnsureInstalled(os.Stdin, os.Stderr, home, interactive, false); err != nil {
 		return "", fmt.Errorf("superpowers install: %w", err)
 	}
 	if err := superpowers.EnsureGitignore(os.Stdin, os.Stderr, mainRepo, interactive); err != nil {

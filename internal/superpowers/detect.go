@@ -41,8 +41,10 @@ var installRunner = func() error {
 }
 
 // EnsureInstalled returns nil if superpowers is detected under home; otherwise
-// in interactive mode it prompts the user to run the plugin installer.
-func EnsureInstalled(in io.Reader, out io.Writer, home string, interactive bool) error {
+// it prompts in interactive mode, or errors in non-interactive mode.
+// assumeYes is accepted for forward-compatibility (wired up in Task 3).
+func EnsureInstalled(in io.Reader, out io.Writer, home string, interactive, assumeYes bool) error {
+	_ = assumeYes // wired up in Task 3
 	ok, err := DetectInstalled(home)
 	if err != nil {
 		return err
