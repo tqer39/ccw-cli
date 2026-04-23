@@ -30,6 +30,8 @@ Exit codes:
   0  success
   1  user error / cancellation
   *  passthrough from ` + "`claude`" + `
+
+Repository: https://github.com/tqer39/ccw-cli
 `
 
 // PrintHelp writes the usage string to w.
