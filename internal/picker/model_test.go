@@ -1,10 +1,12 @@
 package picker
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/tqer39/ccw-cli/internal/gh"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
@@ -34,11 +36,89 @@ func TestActionString(t *testing.T) {
 		{ActionResume, "resume"},
 		{ActionDelete, "delete"},
 		{ActionNew, "new"},
+		{ActionBulkDelete, "bulk-delete"},
 	}
 	for _, tc := range cases {
 		if got := tc.a.String(); got != tc.want {
 			t.Errorf("Action(%d).String() = %q, want %q", tc.a, got, tc.want)
 		}
+	}
+}
+
+func TestUpdate_DeleteAll_NoDirty(t *testing.T) {
+	m := New([]worktree.Info{
+		{Branch: "a", Path: "/a", Status: worktree.StatusPushed},
+		{Branch: "b", Path: "/b", Status: worktree.StatusPushed},
+	})
+	m.bulkTargets = []int{0, 1}
+	m.state = stateBulkConfirm
+	got, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	mm := got.(Model)
+	if mm.Action() != ActionBulkDelete {
+		t.Errorf("want ActionBulkDelete, got %v", mm.Action())
+	}
+	if mm.bulkForce {
+		t.Error("force should be false without dirty")
+	}
+	b := mm.Bulk()
+	if len(b.Paths) != 2 {
+		t.Errorf("want 2 paths, got %d", len(b.Paths))
+	}
+}
+
+func TestUpdate_DeleteAll_WithDirty_Force(t *testing.T) {
+	m := New([]worktree.Info{
+		{Branch: "a", Path: "/a", Status: worktree.StatusPushed},
+		{Branch: "b", Path: "/b", Status: worktree.StatusDirty},
+	})
+	m.bulkTargets = []int{0, 1}
+	m.state = stateBulkConfirm
+	got, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	mm := got.(Model)
+	if !mm.bulkForce {
+		t.Error("force should be true when dirty is included")
+	}
+}
+
+func TestUpdate_DeleteAll_SkipDirty(t *testing.T) {
+	m := New([]worktree.Info{
+		{Branch: "a", Path: "/a", Status: worktree.StatusPushed},
+		{Branch: "b", Path: "/b", Status: worktree.StatusDirty},
+	})
+	m.bulkTargets = []int{0, 1}
+	m.state = stateBulkConfirm
+	got, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
+	mm := got.(Model)
+	if mm.Action() != ActionBulkDelete {
+		t.Errorf("want ActionBulkDelete, got %v", mm.Action())
+	}
+	b := mm.Bulk()
+	if len(b.Paths) != 1 || b.Paths[0] != "/a" {
+		t.Errorf("want only /a, got %v", b.Paths)
+	}
+}
+
+func TestUpdate_BulkFilter_TogglesAndConfirms(t *testing.T) {
+	m := New([]worktree.Info{
+		{Branch: "a", Path: "/a", Status: worktree.StatusPushed},
+		{Branch: "b", Path: "/b", Status: worktree.StatusDirty},
+	})
+	m.state = stateBulkFilter
+	m.bulkFilter = map[worktree.Status]bool{}
+	// toggle dirty
+	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m = next.(Model)
+	if !m.bulkFilter[worktree.StatusDirty] {
+		t.Error("dirty should be toggled on")
+	}
+	// enter -> bulk confirm with 1 target
+	next, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m = next.(Model)
+	if m.state != stateBulkConfirm {
+		t.Errorf("state = %d, want stateBulkConfirm", m.state)
+	}
+	if len(m.bulkTargets) != 1 || m.bulkTargets[0] != 1 {
+		t.Errorf("targets = %v, want [1]", m.bulkTargets)
 	}
 }
 
@@ -48,8 +128,11 @@ func TestUpdateList_EnterOnNewQuits(t *testing.T) {
 	})
 	next, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	m = next.(Model)
-	next, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
-	m = next.(Model)
+	// index 0: worktree, 1: delete-all, 2: clean-pushed, 3: custom-select, 4: new, 5: quit
+	for i := 0; i < 4; i++ {
+		next, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+		m = next.(Model)
+	}
 	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	m = next.(Model)
 	if m.Action() != ActionNew {
@@ -57,6 +140,33 @@ func TestUpdateList_EnterOnNewQuits(t *testing.T) {
 	}
 	if cmd == nil {
 		t.Error("Enter on [new] should emit tea.Quit cmd")
+	}
+}
+
+func TestUpdate_PRFetched(t *testing.T) {
+	m := New([]worktree.Info{
+		{Branch: "a", Path: "/a/.claude/worktrees/x", Status: worktree.StatusPushed},
+	})
+	got, _ := m.Update(prFetchedMsg{prs: map[string]gh.PRInfo{
+		"a": {Number: 1, Title: "t", State: "OPEN"},
+	}})
+	mm := got.(Model)
+	if mm.prUnavailable {
+		t.Error("prUnavailable should be false on success")
+	}
+	if len(mm.prs) != 1 {
+		t.Errorf("want 1 pr, got %d", len(mm.prs))
+	}
+}
+
+func TestUpdate_PRFetchErr_SetsUnavailable(t *testing.T) {
+	m := New([]worktree.Info{
+		{Branch: "a", Path: "/a/.claude/worktrees/x", Status: worktree.StatusPushed},
+	})
+	got, _ := m.Update(prFetchErrMsg{err: errors.New("rate limit")})
+	mm := got.(Model)
+	if !mm.prUnavailable {
+		t.Error("prUnavailable should be true after error")
 	}
 }
 
@@ -226,7 +336,7 @@ func TestView_ListRendersItems(t *testing.T) {
 	m := New([]worktree.Info{
 		{Path: "/a/.claude/worktrees/feat-x", Branch: "feat-x", Status: worktree.StatusPushed},
 	})
-	next, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	next, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
 	m = next.(Model)
 	out := m.View()
 	if !strings.Contains(out, "feat-x") {
