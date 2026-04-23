@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/github/license/tqer39/ccw-cli)](../LICENSE)
 [![Homebrew](https://img.shields.io/badge/brew-tqer39%2Ftap%2Fccw-FBB040?logo=homebrew&logoColor=white)](https://github.com/tqer39/homebrew-tap)
 
-[English](../README.md) · [日本語](README.ja.md)
+[🇺🇸 English](../README.md) · [🇯🇵 日本語](README.ja.md)
 
 </div>
 
@@ -26,6 +26,8 @@ ccw
 ```
 
 これだけ。`ccw` は `.claude/worktrees/` を走査して picker を表示し、worktree が無ければ新規作成します。
+
+> `ccw` は worktree 内から起動しても動作します — `git rev-parse --git-common-dir` で main repo を解決してそこを基準に動くので、プロジェクトルートに `cd` し直す必要はありません。
 
 ## ✨ 特長
 
@@ -84,7 +86,7 @@ go build -o ~/.local/bin/ccw ~/ccw-cli/cmd/ccw
 ### 依存
 
 - `git`
-- [Claude Code](https://docs.claude.com/claude-code) (`claude`) — 未導入なら起動時に npm / brew で入れるかを確認
+- [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.49` — ccw が利用する `--worktree` フラグは 2.1.49 (2026-02-19) で追加されました。未導入なら起動時に npm / brew で入れるかを確認します。
 - *(optional)* [`gh`](https://cli.github.com/) — picker で PR 情報を表示
 - *(optional)* superpowers プラグイン — `-s` 利用時に自動チェック
 
@@ -118,6 +120,10 @@ GIF の再生成は [`docs/assets/picker-demo-setup.sh`](assets/picker-demo-setu
 
 - シェル補完 (bash / zsh)
 - Windows サポート
+
+## 🤖 作成ツール
+
+このプロジェクトは [Claude Code](https://docs.claude.com/claude-code) + Claude **Opus 4.7** で作成しました。
 
 ## 📄 ライセンス
 

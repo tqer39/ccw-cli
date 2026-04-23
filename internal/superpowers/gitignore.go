@@ -16,7 +16,7 @@ const gitignoreBlock = "\n# superpowers workflow artifacts\ndocs/superpowers/\n"
 // EnsureGitignore verifies that docs/superpowers/ is ignored by git. If not,
 // and in interactive mode, it prompts and appends the canonical block to
 // .gitignore. In non-interactive mode it silently leaves the file unchanged,
-// matching bash 版 ensure_gitignore().
+// matching the bash ensure_gitignore().
 func EnsureGitignore(in io.Reader, out io.Writer, mainRepo string, interactive bool) error {
 	cmd := exec.Command("git", "-C", mainRepo, "check-ignore", "-q", "docs/superpowers/")
 	if err := cmd.Run(); err == nil {

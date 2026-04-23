@@ -8,23 +8,23 @@ import (
 const usage = `Usage: ccw [options] [-- <claude-args>...]
 
 Options:
-  -n, --new            常に新規 worktree で起動（既存 worktree の選択をスキップ）
-  -s, --superpowers    superpowers プリアンブルを注入して起動（暗黙に -n）
-  -v, --version        バージョン情報を表示
-  -h, --help           このヘルプを表示
+  -n, --new            Always start a new worktree (skip picker)
+  -s, --superpowers    Inject superpowers preamble (implies -n)
+  -v, --version        Show version
+  -h, --help           Show this help
 
 Bulk delete:
-      --clean-all        一括削除モード
+      --clean-all        Bulk delete mode
       --status=<filter>  all | pushed | local-only | dirty (default: all)
-      --force            dirty を --force で削除
-      --dry-run          対象だけ表示して終了
-  -y, --yes              確認プロンプトをスキップ
+      --force            Delete dirty worktrees with --force
+      --dry-run          Print targets and exit
+  -y, --yes              Skip confirmation prompt
 
 Arguments after ` + "`--`" + ` are forwarded to ` + "`claude`" + ` verbatim.
 
 Environment:
-  NO_COLOR=1           カラー出力を無効化
-  CCW_DEBUG=1          詳細ログ出力
+  NO_COLOR=1           Disable colored output
+  CCW_DEBUG=1          Verbose debug logging
 
 Exit codes:
   0  success

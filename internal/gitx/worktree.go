@@ -50,7 +50,7 @@ func ParsePorcelain(s string) []WorktreeEntry {
 }
 
 // RemoveWorktree removes a worktree. If force is true, passes --force so that
-// dirty worktrees can still be removed (bash 版 delete_worktree と同じ挙動).
+// dirty worktrees can still be removed (matches the bash delete_worktree).
 func RemoveWorktree(mainRepo, path string, force bool) error {
 	args := []string{"worktree", "remove"}
 	if force {

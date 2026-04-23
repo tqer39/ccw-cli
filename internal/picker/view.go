@@ -15,7 +15,7 @@ func (m Model) View() string {
 	case stateList:
 		base := m.list.View()
 		if !gh.Available() {
-			return base + "\n\n💡 gh があったら PR 名も出せます"
+			return base + "\n\n💡 Install gh to see PR titles here"
 		}
 		return base
 	case stateMenu:
@@ -81,7 +81,7 @@ func (m Model) bulkConfirmView() string {
 		b.WriteString(line)
 	}
 	if hasDirty {
-		b.WriteString("\n⚠ dirty worktree が含まれます。`git worktree remove --force` が必要です。\n")
+		b.WriteString("\n⚠ Dirty worktrees are included. `git worktree remove --force` is required.\n")
 		b.WriteString("  [y] yes (include dirty, use --force)\n")
 		b.WriteString("  [s] skip dirty (remove clean only)\n")
 		b.WriteString("  [N] cancel\n")

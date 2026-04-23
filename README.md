@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/github/license/tqer39/ccw-cli)](LICENSE)
 [![Homebrew](https://img.shields.io/badge/brew-tqer39%2Ftap%2Fccw-FBB040?logo=homebrew&logoColor=white)](https://github.com/tqer39/homebrew-tap)
 
-[English](README.md) · [日本語](docs/README.ja.md)
+[🇺🇸 English](README.md) · [🇯🇵 日本語](docs/README.ja.md)
 
 </div>
 
@@ -26,6 +26,8 @@ ccw
 ```
 
 That's it. `ccw` scans `.claude/worktrees/` and shows the picker, or spins up a fresh worktree if none exist.
+
+> `ccw` also works from inside a worktree — it resolves the main repo via `git rev-parse --git-common-dir` and operates there, so you don't need to `cd` back to the project root first.
 
 ## ✨ Features
 
@@ -84,7 +86,7 @@ Make sure `~/.local/bin` is on your `PATH`.
 ### Requirements
 
 - `git`
-- [Claude Code](https://docs.claude.com/claude-code) (`claude`) — ccw offers to install via npm / brew if missing
+- [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.49` — the `--worktree` flag that ccw relies on was introduced in 2.1.49 (2026-02-19). ccw offers to install `claude` via npm / brew if missing.
 - *(optional)* [`gh`](https://cli.github.com/) — enables PR info in the picker
 - *(optional)* superpowers plugin — auto-checked when `-s` is used
 
@@ -118,6 +120,10 @@ See [`docs/assets/picker-demo-setup.sh`](docs/assets/picker-demo-setup.sh) + [`p
 
 - Shell completion (bash / zsh)
 - Windows support
+
+## 🤖 Built With
+
+This project was built with [Claude Code](https://docs.claude.com/claude-code) using Claude **Opus 4.7**.
 
 ## 📄 License
 

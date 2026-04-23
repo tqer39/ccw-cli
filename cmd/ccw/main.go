@@ -1,7 +1,7 @@
 // Command ccw launches Claude Code in an isolated git worktree.
 //
-// Phase 3 status: -h / -v / -n / -s / picker が bash 版とパリティ。
-// bash 版 bin/ccw は移行期のフォールバックとして温存。
+// Phase 3 status: -h / -v / -n / -s and the picker are at parity with the
+// bash implementation. The bash `bin/ccw` is kept as a transitional fallback.
 package main
 
 import (

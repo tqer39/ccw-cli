@@ -117,7 +117,7 @@ func TestList_FillsCounts(t *testing.T) {
 		t.Fatal("want at least one worktree")
 	}
 	w := got[0]
-	// upstream 無し clean worktree なので ahead/behind/dirty すべて 0
+	// No upstream and a clean tree, so ahead/behind/dirty should all be 0.
 	if w.AheadCount != 0 || w.BehindCount != 0 {
 		t.Errorf("want 0/0 without upstream, got %d/%d", w.AheadCount, w.BehindCount)
 	}
