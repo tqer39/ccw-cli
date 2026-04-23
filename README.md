@@ -1,6 +1,6 @@
-# ccw
-
 ![ccw-cli — Claude Code x worktree](docs/assets/header.png)
+
+# ccw
 
 Claude Code worktree launcher — isolates each session in its own git worktree with opinionated defaults.
 
