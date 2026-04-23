@@ -114,6 +114,63 @@ func TestEnsureInstalled_InstallFails(t *testing.T) {
 	}
 }
 
+func TestEnsureInstalled_AutoInstallWithAssumeYes(t *testing.T) {
+	home := t.TempDir()
+	var called bool
+	orig := installRunner
+	installRunner = func() error { called = true; return nil }
+	t.Cleanup(func() { installRunner = orig })
+
+	var out bytes.Buffer
+	if err := EnsureInstalled(strings.NewReader(""), &out, home, true, true); err != nil {
+		t.Fatalf("EnsureInstalled assumeYes: %v", err)
+	}
+	if !called {
+		t.Error("installRunner not called")
+	}
+	if strings.Contains(out.String(), "Run now?") {
+		t.Errorf("prompt should not appear with assumeYes, got %q", out.String())
+	}
+	if !strings.Contains(out.String(), "Installing superpowers plugin") {
+		t.Errorf("missing pre-install message, got %q", out.String())
+	}
+	if !strings.Contains(out.String(), "Installed superpowers plugin.") {
+		t.Errorf("missing success message, got %q", out.String())
+	}
+}
+
+func TestEnsureInstalled_AutoInstallNonInteractive(t *testing.T) {
+	home := t.TempDir()
+	var called bool
+	orig := installRunner
+	installRunner = func() error { called = true; return nil }
+	t.Cleanup(func() { installRunner = orig })
+
+	var out bytes.Buffer
+	if err := EnsureInstalled(strings.NewReader(""), &out, home, false, false); err != nil {
+		t.Fatalf("EnsureInstalled non-interactive: %v", err)
+	}
+	if !called {
+		t.Error("installRunner not called")
+	}
+	if strings.Contains(out.String(), "Run now?") {
+		t.Errorf("prompt should not appear when non-interactive, got %q", out.String())
+	}
+}
+
+func TestEnsureInstalled_AutoInstallFails(t *testing.T) {
+	home := t.TempDir()
+	orig := installRunner
+	installRunner = func() error { return errFake }
+	t.Cleanup(func() { installRunner = orig })
+
+	var out bytes.Buffer
+	err := EnsureInstalled(strings.NewReader(""), &out, home, false, false)
+	if err == nil {
+		t.Fatal("EnsureInstalled auto-install fail: want error")
+	}
+}
+
 var errFake = fakeErr("boom")
 
 type fakeErr string
