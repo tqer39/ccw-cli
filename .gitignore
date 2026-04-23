@@ -196,3 +196,7 @@ coverage.html
 # lefthook local overrides
 lefthook-local.yml
 .lefthook-local/
+
+
+# superpowers workflow artifacts
+docs/superpowers/

@@ -93,3 +93,63 @@ func TestSetWriterDisablesColor(t *testing.T) {
 	}
 	_ = out
 }
+
+func TestPromptYN_YesVariants(t *testing.T) {
+	for _, in := range []string{"y\n", "Y\n", "yes\n", "YES\n"} {
+		t.Run("input="+in, func(t *testing.T) {
+			var out bytes.Buffer
+			ok, err := PromptYN(strings.NewReader(in), &out, "Go?")
+			if err != nil {
+				t.Fatalf("PromptYN: %v", err)
+			}
+			if !ok {
+				t.Errorf("PromptYN(%q) = false, want true", in)
+			}
+			if !strings.Contains(out.String(), "Go?") {
+				t.Errorf("prompt not written to out: %q", out.String())
+			}
+		})
+	}
+}
+
+func TestPromptYN_NoAndEmpty(t *testing.T) {
+	for _, in := range []string{"", "n\n", "\n", "maybe\n"} {
+		t.Run("input="+in, func(t *testing.T) {
+			var out bytes.Buffer
+			ok, err := PromptYN(strings.NewReader(in), &out, "Go?")
+			if err != nil {
+				t.Fatalf("PromptYN: %v", err)
+			}
+			if ok {
+				t.Errorf("PromptYN(%q) = true, want false", in)
+			}
+		})
+	}
+}
+
+func TestPromptChoice_Valid(t *testing.T) {
+	var out bytes.Buffer
+	got, err := PromptChoice(strings.NewReader("2\n"), &out, "Pick:", []rune{'1', '2', 'q'})
+	if err != nil {
+		t.Fatalf("PromptChoice: %v", err)
+	}
+	if got != '2' {
+		t.Errorf("PromptChoice = %q, want '2'", got)
+	}
+}
+
+func TestPromptChoice_Invalid(t *testing.T) {
+	var out bytes.Buffer
+	_, err := PromptChoice(strings.NewReader("x\n"), &out, "Pick:", []rune{'1', '2', 'q'})
+	if err == nil {
+		t.Fatal("PromptChoice invalid: want error, got nil")
+	}
+}
+
+func TestPromptChoice_EmptyInput(t *testing.T) {
+	var out bytes.Buffer
+	_, err := PromptChoice(strings.NewReader(""), &out, "Pick:", []rune{'1'})
+	if err == nil {
+		t.Fatal("PromptChoice empty: want error, got nil")
+	}
+}

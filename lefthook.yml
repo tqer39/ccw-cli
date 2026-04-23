@@ -35,7 +35,7 @@ pre-commit:
         fi
     golangci-lint:
       glob: "*.go"
-      run: golangci-lint run {staged_files}
+      run: golangci-lint run ./...
 
     # ── Shell ──
     shellcheck:
