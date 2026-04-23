@@ -2,10 +2,13 @@
 package ui
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 
 	"golang.org/x/term"
 )
@@ -67,6 +70,58 @@ func EnsureTool(name, installHint string) {
 		Error("required tool not found: %s. %s", name, installHint)
 		os.Exit(1)
 	}
+}
+
+// PromptYN writes question + " [y/N]: " to out and reads one line from in.
+// Returns true for y / yes (case-insensitive); false for anything else or EOF.
+func PromptYN(in io.Reader, out io.Writer, question string) (bool, error) {
+	_, _ = fmt.Fprintf(out, "%s [y/N]: ", question)
+	line, err := readLine(in)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return false, fmt.Errorf("prompt yn: %w", err)
+	}
+	switch strings.ToLower(strings.TrimSpace(line)) {
+	case "y", "yes":
+		return true, nil
+	default:
+		return false, nil
+	}
+}
+
+// PromptChoice writes question + " " to out and reads one line. Returns the
+// first rune of the trimmed lowercased answer if it is in valid; otherwise
+// an error.
+func PromptChoice(in io.Reader, out io.Writer, question string, valid []rune) (rune, error) {
+	_, _ = fmt.Fprintf(out, "%s ", question)
+	line, err := readLine(in)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return 0, fmt.Errorf("prompt choice: %w", err)
+	}
+	trimmed := strings.ToLower(strings.TrimSpace(line))
+	if trimmed == "" {
+		return 0, errors.New("empty choice")
+	}
+	got := []rune(trimmed)[0]
+	for _, v := range valid {
+		if got == v {
+			return got, nil
+		}
+	}
+	return 0, fmt.Errorf("invalid choice: %q", string(got))
+}
+
+// IsInteractive returns true if f is a terminal.
+func IsInteractive(f *os.File) bool {
+	return term.IsTerminal(int(f.Fd()))
+}
+
+func readLine(in io.Reader) (string, error) {
+	r := bufio.NewReader(in)
+	s, err := r.ReadString('\n')
+	if err != nil {
+		return s, fmt.Errorf("read line: %w", err)
+	}
+	return s, nil
 }
 
 func write(w io.Writer, prefix string, ansi int, format string, args ...any) {
