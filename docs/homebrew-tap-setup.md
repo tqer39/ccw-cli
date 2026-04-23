@@ -82,12 +82,37 @@ make release-snapshot # dist/ 配下に 4 archives + ccw.rb が出る
 make release-clean
 ```
 
-問題なければ Phase 5 のタグ付け（`v0.1.0`）に進める。
+問題なければリリース実行に進める（次節）。
 
-## 6. トラブルシューティング
+## 6. リリース実行（workflow_dispatch）
+
+リリースは **GitHub Actions の workflow_dispatch から** 実行する。ローカルから tag push はしない:
+
+1. <https://github.com/tqer39/ccw-cli/actions/workflows/release.yml> を開く
+2. "Run workflow" を押す
+3. `version` 入力に `vX.Y.Z` (例: `v0.1.0`) を入れて実行
+4. workflow 内で以下が自動実行される:
+   - `version` 形式チェック（`^v\d+\.\d+\.\d+(-.+)?$`）
+   - `gh release create --draft --generate-notes` で **GitHub Release と tag を同時に作成**（REST API 経由、tag 作成は GitHub 側）
+   - goreleaser が既存 draft release に 4 archive + checksums を append
+   - homebrew-tap に `Formula/ccw.rb` を push
+   - `gh release edit --draft=false` で release を publish
+
+`gh workflow run release.yml -f version=v0.1.0 --repo tqer39/ccw-cli` でも同等。
+
+リリース後の確認:
+
+```bash
+brew tap tqer39/tap
+brew install tqer39/tap/ccw
+ccw -v  # vX.Y.Z
+```
+
+## 7. トラブルシューティング
 
 - **`Not Accessible by integration`**: App が tap リポにインストールされていない（Step 3 を再確認）
-- **`Bad credentials`**: `HOMEBREW_TAP_APP_PRIVATE_KEY` の改行が壊れている。`.pem` を `gh secret set ... < file` でリダイレクト登録すれば LF が維持される
+- **`Bad credentials`**: `GHA_APP_PRIVATE_KEY` の改行が壊れている。`.pem` を `gh secret set ... < file` でリダイレクト登録すれば LF が維持される
 - **`App not found`**: `GHA_APP_CLIENT_ID` の値誤り。App 設定画面上部に表示される Client ID (`Iv23li...`) を使う
 - **tap リポの `Formula/` が無い**: Step 1 の `.gitkeep` push を先に済ませる
-- **タグ再打ち直し**: secret 未設定で tag push してしまった場合、`git tag -d v0.1.0 && git push origin :refs/tags/v0.1.0` で削除して再 push
+- **422 `already_exists` on asset upload**: 同一 tag の Release が既にある。`gh release delete vX.Y.Z --cleanup-tag` で削除してから再 dispatch
+- **workflow が「tag already exists」で失敗**: 手動で先に tag を push していないか確認。dispatch は新規 tag を作るので事前 push 不要
