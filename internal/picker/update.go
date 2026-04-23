@@ -2,6 +2,7 @@ package picker
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
 // Update implements tea.Model.
@@ -83,8 +84,20 @@ func (m Model) currentSelection() Selection {
 	return Selection{Path: w.Path, Branch: w.Branch, Status: w.Status}
 }
 
-// updateDeleteConfirm is a stub filled in by Task 5.
 func (m Model) updateDeleteConfirm(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	_ = msg
+	switch msg.String() {
+	case "y", "Y":
+		sel := m.currentSelection()
+		sel.ForceDelete = sel.Status == worktree.StatusDirty
+		m.selection = sel
+		m.action = ActionDelete
+		return m, tea.Quit
+	case "n", "N", "b", "B", "esc":
+		m.state = stateList
+		return m, nil
+	case "q", "Q", "ctrl+c":
+		m.action = ActionCancel
+		return m, tea.Quit
+	}
 	return m, nil
 }

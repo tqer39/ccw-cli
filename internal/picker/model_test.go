@@ -152,6 +152,76 @@ func TestMenuView_ContainsSelectionSummary(t *testing.T) {
 	}
 }
 
+func goToDeleteConfirm(m Model) Model {
+	m = selectFirstWorktree(m)
+	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	return next.(Model)
+}
+
+func TestDeleteConfirm_YesOnCleanConfirmsWithoutForce(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusPushed},
+	})
+	m = goToDeleteConfirm(m)
+	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	m = next.(Model)
+	if m.Action() != ActionDelete {
+		t.Errorf("Action = %s, want delete", m.Action())
+	}
+	if m.Selection().ForceDelete {
+		t.Error("ForceDelete should be false for clean worktree")
+	}
+	if cmd == nil {
+		t.Error("y should emit tea.Quit")
+	}
+}
+
+func TestDeleteConfirm_YesOnDirtyForces(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusDirty},
+	})
+	m = goToDeleteConfirm(m)
+	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	m = next.(Model)
+	if !m.Selection().ForceDelete {
+		t.Error("ForceDelete should be true for dirty worktree")
+	}
+}
+
+func TestDeleteConfirm_NoReturnsToList(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusPushed},
+	})
+	m = goToDeleteConfirm(m)
+	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	m = next.(Model)
+	if m.state != stateList {
+		t.Errorf("state = %d, want stateList after n", m.state)
+	}
+}
+
+func TestDeleteConfirmView_ShowsForceForDirty(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusDirty},
+	})
+	m = goToDeleteConfirm(m)
+	out := m.View()
+	if !strings.Contains(out, "--force") {
+		t.Errorf("deleteConfirmView missing --force marker for dirty:\n%s", out)
+	}
+}
+
+func TestDeleteConfirmView_HidesForceForClean(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusPushed},
+	})
+	m = goToDeleteConfirm(m)
+	out := m.View()
+	if strings.Contains(out, "--force") {
+		t.Errorf("deleteConfirmView should not show --force for clean worktree:\n%s", out)
+	}
+}
+
 func TestView_ListRendersItems(t *testing.T) {
 	m := New([]worktree.Info{
 		{Path: "/a/.claude/worktrees/feat-x", Branch: "feat-x", Status: worktree.StatusPushed},
