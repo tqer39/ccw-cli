@@ -48,7 +48,7 @@ type Selection struct {
 	ForceDelete bool
 }
 
-// BulkDeletion は複数 worktree をまとめて消す際の宛先。
+// BulkDeletion describes the set of worktrees to remove in a bulk delete.
 type BulkDeletion struct {
 	Paths []string
 	Force bool
@@ -187,13 +187,13 @@ func (m Model) Init() tea.Cmd {
 	return fetchPRsCmd(branches)
 }
 
-// prFetchedMsg は gh.PRStatus が成功したときに送られる。
+// prFetchedMsg is delivered when gh.PRStatus succeeds.
 type prFetchedMsg struct{ prs map[string]gh.PRInfo }
 
-// prFetchErrMsg は gh の呼び出しが失敗したときに送られる。
+// prFetchErrMsg is delivered when the gh invocation fails.
 type prFetchErrMsg struct{ err error }
 
-// fetchPRsCmd は branches 分の PR を非同期取得する。
+// fetchPRsCmd asynchronously fetches PR info for each branch.
 func fetchPRsCmd(branches []string) tea.Cmd {
 	return func() tea.Msg {
 		m, err := gh.PRStatus(branches)
@@ -204,7 +204,8 @@ func fetchPRsCmd(branches []string) tea.Cmd {
 	}
 }
 
-// applyPRsToItems は現在の m.prs / m.prUnavailable を delegate と listItem に反映する。
+// applyPRsToItems propagates the current m.prs / m.prUnavailable into the
+// list delegate and the listItem rows.
 func (m *Model) applyPRsToItems() {
 	items := m.list.Items()
 	for i, it := range items {

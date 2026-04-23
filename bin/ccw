@@ -244,7 +244,7 @@ run_uninstall() {
 # ----------------------------------------------------------------------------
 # git helpers
 # ----------------------------------------------------------------------------
-# worktree 内から呼ばれても main repo のトップレベルを返す
+# Returns the main repo top-level even when invoked from inside a worktree.
 resolve_main_repo() {
   local common_dir
   common_dir="$(git rev-parse --git-common-dir 2>/dev/null)" || return 1
@@ -264,7 +264,7 @@ require_git_repo() {
 # ----------------------------------------------------------------------------
 # dependency checks
 # ----------------------------------------------------------------------------
-# 基盤ツール (git/brew/npm): 欠落時に URL 案内して exit 1
+# Base tools (git/brew/npm): on missing, print install URL and exit 1.
 check_base_tool_or_exit() {
   local tool="$1" url="$2"
   if command -v "$tool" >/dev/null 2>&1; then
@@ -280,9 +280,9 @@ check_base_tool_or_exit() {
 # ----------------------------------------------------------------------------
 # claude launch
 # ----------------------------------------------------------------------------
-# 新規 worktree で claude を起動する
-# $1: superpowers preamble (空文字なら preamble なし)
-# その後の引数: claude への pass-through 引数
+# Launch claude in a fresh worktree.
+# $1: superpowers preamble (empty string = no preamble)
+# remaining args: pass-through to claude
 launch_claude_new() {
   local preamble="$1"
   shift
@@ -305,7 +305,7 @@ launch_claude_new() {
 }
 
 check_superpowers() {
-  # ~/.claude/plugins/cache/*/superpowers/ を glob で検出
+  # Detect ~/.claude/plugins/cache/*/superpowers/ via glob.
   local glob_pat="$HOME/.claude/plugins/cache/*/superpowers"
   if compgen -G "$glob_pat" >/dev/null 2>&1; then
     return 0
@@ -346,7 +346,7 @@ check_superpowers() {
 # ----------------------------------------------------------------------------
 ensure_gitignore() {
   local main_repo="$1"
-  # 既に ignore 対象なら何もしない
+  # Nothing to do if it's already ignored.
   if (cd "$main_repo" && git check-ignore -q docs/superpowers/) 2>/dev/null; then
     return 0
   fi
@@ -390,8 +390,8 @@ ensure_gitignore() {
 # ----------------------------------------------------------------------------
 # worktree picker
 # ----------------------------------------------------------------------------
-# .claude/worktrees/* 配下の worktree を列挙する。
-# 各行: <path>\t<branch>
+# List worktrees under .claude/worktrees/*.
+# Each line: <path>\t<branch>
 list_ccw_worktrees() {
   local main_repo="$1"
   git -C "$main_repo" worktree list --porcelain 2>/dev/null | awk '
@@ -413,7 +413,7 @@ list_ccw_worktrees() {
   '
 }
 
-# worktree のステータスを 1 行で返す (dirty | local-only | pushed)
+# Print the worktree status as a single token (dirty | local-only | pushed).
 worktree_flags() {
   local wt="$1"
   if [[ -n "$(git -C "$wt" status --porcelain 2>/dev/null)" ]]; then
@@ -444,9 +444,9 @@ worktree_icon() {
   esac
 }
 
-# bash + tput で ↑↓ 選択 UI を提供する。
-# 引数: 表示文字列の配列
-# 結果: 選択したインデックス (0-based) を stdout に出力。キャンセルで 1 を返す。
+# Arrow-key selection UI implemented with bash + tput.
+# Args: array of display strings.
+# Output: the selected 0-based index on stdout. Returns 1 on cancel.
 tui_select() {
   local -a items=("$@")
   local n=${#items[@]}
@@ -502,8 +502,8 @@ tui_select() {
   done
 }
 
-# picker 選択から resume/delete/new の分岐までを担う
-# 呼び出し元から CLAUDE_ARGS 配列を見る前提
+# Drives the picker flow: selection → resume / delete / new.
+# Relies on the caller's CLAUDE_ARGS array.
 run_picker_flow() {
   local main_repo="$1"
 
@@ -648,7 +648,7 @@ delete_worktree() {
   success "Removed $wt"
 }
 
-# tty がない場合の番号選択 fallback
+# Numbered-selection fallback when there is no tty.
 tui_select_fallback() {
   local -a items=("$@")
   info "Select an item:" >&2
@@ -719,9 +719,9 @@ check_claude() {
 # ----------------------------------------------------------------------------
 # argument parsing
 # ----------------------------------------------------------------------------
-# パース結果を以下のグローバル変数に設定する
+# Parse arguments into the following globals:
 #   FLAG_NEW / FLAG_SUPER / FLAG_UPDATE / FLAG_UNINSTALL / FLAG_VERSION / FLAG_HELP
-#   CLAUDE_ARGS (配列)
+#   CLAUDE_ARGS (array)
 parse_args() {
   FLAG_NEW=0
   FLAG_SUPER=0
@@ -810,10 +810,10 @@ main() {
   check_base_tool_or_exit "git" "https://git-scm.com/downloads"
   check_claude
 
-  # main repo へ移動 (origin/HEAD 同期と claude 起動位置のため)
+  # cd into the main repo (needed for origin/HEAD sync and for claude's cwd).
   cd "$main_repo"
 
-  # origin/HEAD 同期 (失敗は無視)
+  # Best-effort origin/HEAD sync; ignore errors.
   git remote set-head origin -a >/dev/null 2>&1 || true
 
   local preamble=""
@@ -823,7 +823,7 @@ main() {
     preamble="$(superpowers_preamble)"
   fi
 
-  # -s または -n → 新規 worktree で直接起動 (picker スキップ)
+  # -s or -n → launch directly in a fresh worktree (skip the picker).
   if [[ $FLAG_SUPER -eq 1 || $FLAG_NEW -eq 1 ]]; then
     if [[ ${#CLAUDE_ARGS[@]} -gt 0 ]]; then
       launch_claude_new "$preamble" "${CLAUDE_ARGS[@]}"
@@ -833,7 +833,7 @@ main() {
     exit $?
   fi
 
-  # デフォルト (無印) → worktree picker
+  # Default (no flags) → worktree picker.
   run_picker_flow "$main_repo"
 }
 
