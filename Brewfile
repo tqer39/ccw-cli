@@ -10,6 +10,7 @@ brew "lefthook"
 # Linters / formatters (referenced by lefthook.yml and CI parity)
 brew "yamllint"
 brew "actionlint"
+brew "pinact"
 brew "shellcheck"
 brew "shfmt"
 brew "golangci-lint"

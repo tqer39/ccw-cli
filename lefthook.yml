@@ -52,6 +52,12 @@ pre-commit:
     actionlint:
       glob: ".github/workflows/*.{yml,yaml}"
       run: actionlint {staged_files}
+    pinact:
+      glob:
+        - ".github/workflows/*.{yml,yaml}"
+        - ".github/actions/*/*.{yml,yaml}"
+      run: pinact run {staged_files}
+      stage_fixed: true
 
     # ── Markdown ──
     markdownlint:
