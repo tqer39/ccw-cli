@@ -50,6 +50,22 @@ func TestRunFallback_QuitByEOF(t *testing.T) {
 	}
 }
 
+func TestRunFallback_ShowsIndicators(t *testing.T) {
+	infos := []worktree.Info{
+		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusLocalOnly, AheadCount: 3, BehindCount: 1},
+		{Path: "/a/.claude/worktrees/y", Branch: "y", Status: worktree.StatusDirty, DirtyCount: 5},
+	}
+	var out bytes.Buffer
+	_, _, _ = runFallback(infos, strings.NewReader("q\n"), &out)
+	got := out.String()
+	if !strings.Contains(got, "↑3 ↓1") {
+		t.Errorf("want ↑3 ↓1 in output; got:\n%s", got)
+	}
+	if !strings.Contains(got, "↑0 ↓0 ✎5") {
+		t.Errorf("want ↑0 ↓0 ✎5 in output; got:\n%s", got)
+	}
+}
+
 func TestRunFallback_InvalidNumber(t *testing.T) {
 	infos := []worktree.Info{{Path: "/a", Branch: "x", Status: worktree.StatusPushed}}
 	var out bytes.Buffer
