@@ -27,15 +27,14 @@ ccw
 
 これだけ。`ccw` は `.claude/worktrees/` を走査して picker を表示し、worktree が無ければ新規作成します。
 
-> `ccw` は worktree 内から起動しても動作します — `git rev-parse --git-common-dir` で main repo を解決してそこを基準に動くので、プロジェクトルートに `cd` し直す必要はありません。
-
 ## ✨ 特長
 
-- 🌳 **セッション分離** — `claude` 起動ごとに専用 git worktree
-- 🎯 **スマート picker** — ステータスバッジ、`↑N ↓M ✎N` インジケータ、`gh` 経由の PR 情報表示
-- 🧹 **一括削除** — picker の `[clean pushed]` や `ccw --clean-all`
-- 🦸 **Superpowers プリアンブル** — `-s` で `brainstorming → writing-plans → executing-plans` ワークフローを注入
-- ➡️ **透過的 passthrough** — `--` 以降の引数は `claude` にそのまま渡される
+- 🤝 **橋渡しまでが仕事** — worktree を選ぶ（or 新規作成）→ その中で `claude` を起動 → ccw は終了。常駐プロセスもラッパーもなく、tmux/zellij にも噛まない。あとは claude の世界
+- 🧭 **リポジトリ内のどこからでも起動** — worktree 内やサブディレクトリからでも `ccw` が動く（main repo を自動解決）
+- 🎯 **worktree の状態が一目でわかる** — push 済 / ahead・behind / dirty、PR 番号を picker にまとめて表示
+- 🧹 **溜まった worktree を一括掃除** — `[clean pushed]` / `ccw --clean-all` で push 済をまとめて削除
+- 🦸 **"設計してから書く" 流儀で起動** — `-s` で brainstorming → writing-plans → executing-plans の手順を claude に指示（plugin 未導入なら入れるか確認）
+- ➡️ **claude のオプションはそのまま届く** — `--` 以降の引数は素通しするので `--model` などが使える
 
 ## 🎬 デモ
 
