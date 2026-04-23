@@ -1,4 +1,4 @@
-.PHONY: build test lint tidy run clean release-check release-snapshot release-clean
+.PHONY: bootstrap build test lint tidy run clean release-check release-snapshot release-clean
 
 build:
 	go build -o ccw ./cmd/ccw
@@ -26,3 +26,14 @@ release-snapshot:
 
 release-clean:
 	rm -rf dist/
+
+bootstrap:
+	@command -v brew >/dev/null 2>&1 || { \
+	  echo "❌ Homebrew is required. See https://brew.sh"; \
+	  exit 1; \
+	}
+	brew bundle --file=Brewfile
+	mise install
+	lefthook install --force
+	go mod download
+	@echo "✅ bootstrap complete"
