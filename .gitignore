@@ -96,7 +96,7 @@ go.work
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
 
 # Thumbnails
 ._*
@@ -200,3 +200,6 @@ lefthook-local.yml
 
 # superpowers workflow artifacts
 docs/superpowers/
+
+# ccw-managed worktrees (the tool's own runtime output)
+.claude/worktrees/
