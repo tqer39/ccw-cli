@@ -1,0 +1,26 @@
+---
+name: "Feature Request (en)"
+description: "Suggest a feature or enhancement"
+labels: ["enhancement"]
+body:
+  - type: "textarea"
+    id: "description"
+    attributes:
+      label: "Description"
+      description: "What should ccw do? Describe in one or two sentences."
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "motivation"
+    attributes:
+      label: "Motivation"
+      description: "What problem does this solve? What's your use case?"
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "alternatives"
+    attributes:
+      label: "Alternatives"
+      description: "Workarounds or other approaches you considered."

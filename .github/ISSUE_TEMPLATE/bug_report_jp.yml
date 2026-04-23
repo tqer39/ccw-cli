@@ -1,0 +1,50 @@
+---
+name: "Bug Report (jp)"
+description: "ccw の不具合を報告"
+labels: ["bug"]
+body:
+  - type: "textarea"
+    id: "description"
+    attributes:
+      label: "概要"
+      description: "何が起きたか、何を期待していたか。"
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "reproduction"
+    attributes:
+      label: "再現手順"
+      placeholder: |
+        1. `ccw ...` を実行
+        2. ...
+    validations:
+      required: true
+
+  - type: "input"
+    id: "ccw-version"
+    attributes:
+      label: "ccw バージョン"
+      description: "`ccw --version` の出力。"
+    validations:
+      required: true
+
+  - type: "input"
+    id: "claude-version"
+    attributes:
+      label: "Claude Code バージョン"
+      description: "`claude --version` の出力。"
+
+  - type: "checkboxes"
+    id: "os"
+    attributes:
+      label: "OS"
+      options:
+        - label: "macOS"
+        - label: "Linux"
+
+  - type: "textarea"
+    id: "additional"
+    attributes:
+      label: "補足"
+      description: "ログ、スクリーンショット、`CCW_DEBUG=1` の出力など。"

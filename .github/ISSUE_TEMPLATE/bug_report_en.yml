@@ -1,0 +1,50 @@
+---
+name: "Bug Report (en)"
+description: "Report a bug in ccw"
+labels: ["bug"]
+body:
+  - type: "textarea"
+    id: "description"
+    attributes:
+      label: "Description"
+      description: "What happened, and what did you expect?"
+    validations:
+      required: true
+
+  - type: "textarea"
+    id: "reproduction"
+    attributes:
+      label: "Steps to reproduce"
+      placeholder: |
+        1. Run `ccw ...`
+        2. ...
+    validations:
+      required: true
+
+  - type: "input"
+    id: "ccw-version"
+    attributes:
+      label: "ccw version"
+      description: "Output of `ccw --version`."
+    validations:
+      required: true
+
+  - type: "input"
+    id: "claude-version"
+    attributes:
+      label: "Claude Code version"
+      description: "Output of `claude --version`."
+
+  - type: "checkboxes"
+    id: "os"
+    attributes:
+      label: "OS"
+      options:
+        - label: "macOS"
+        - label: "Linux"
+
+  - type: "textarea"
+    id: "additional"
+    attributes:
+      label: "Additional information"
+      description: "Logs, screenshots, `CCW_DEBUG=1` output, etc."
