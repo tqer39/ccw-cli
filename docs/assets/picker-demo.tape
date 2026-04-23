@@ -1,10 +1,10 @@
 Output "/tmp/ccw-demo.gif"
 
 Set Shell "bash"
-Set FontSize 28
-Set Width 1280
-Set Height 780
-Set Padding 28
+Set FontSize 24
+Set Width 1024
+Set Height 640
+Set Padding 20
 Set Theme "Catppuccin Mocha"
 Set TypingSpeed 110ms
 Set PlaybackSpeed 0.92

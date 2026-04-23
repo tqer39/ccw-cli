@@ -27,15 +27,14 @@ ccw
 
 That's it. `ccw` scans `.claude/worktrees/` and shows the picker, or spins up a fresh worktree if none exist.
 
-> `ccw` also works from inside a worktree — it resolves the main repo via `git rev-parse --git-common-dir` and operates there, so you don't need to `cd` back to the project root first.
-
 ## ✨ Features
 
-- 🌳 **Isolated sessions** — each `claude` run gets its own git worktree
-- 🎯 **Smart picker** — status badges, `↑N ↓M ✎N` indicators, PR info via `gh`
-- 🧹 **Bulk delete** — `[clean pushed]` from the picker or `ccw --clean-all`
-- 🦸 **Superpowers preamble** — `-s` injects the `brainstorming → writing-plans → executing-plans` workflow
-- ➡️ **Transparent passthrough** — anything after `--` reaches `claude` verbatim
+- 🤝 **Hand-off and step aside** — pick (or create) a worktree, launch `claude` in it, then ccw exits. No daemon, no wrapper process, no coupling to tmux/zellij — just the bridge.
+- 🧭 **Works from anywhere in the repo** — run `ccw` inside a worktree or subdirectory; ccw resolves the main repo automatically
+- 🎯 **Worktree state at a glance** — pushed / ahead / behind / dirty, plus PR info, all in one picker
+- 🧹 **Bulk cleanup** — `[clean pushed]` or `ccw --clean-all` sweeps the worktrees you're done with
+- 🦸 **"Design first" startup** — `-s` tells claude to follow the brainstorming → writing-plans → executing-plans flow (prompts to install the superpowers plugin if missing)
+- ➡️ **claude flags pass through** — anything after `--` goes to claude untouched, so `--model` and friends still work
 
 ## 🎬 Demo
 
@@ -65,6 +64,9 @@ Run `ccw --help` for the full flag reference.
 Selecting a worktree opens `[r] run` / `[d] delete` / `[b] back`. `run` launches a fresh `claude --permission-mode auto` in that worktree — ccw does **not** reuse Claude Code session IDs (no `--resume` under the hood). Bulk shortcuts (`[delete all]`, `[clean pushed]`, `[custom select]`) remove many at once; dirty items require either `--force` or a three-choice confirm (`y` force · `s` skip dirty · `N` cancel).
 
 PR display requires [`gh`](https://cli.github.com/). Without `gh`, the picker stays functional and shows a hint; rate-limit / network failures hide the PR column silently.
+
+> ⚠️ **Passing `--resume` through `--` is unsupported.**
+> `ccw -n -- --resume ID` and `ccw -s -- --resume ID` combine `claude --worktree` (new worktree) with `--resume` (continue a prior session); the resumed transcript's file references won't match the freshly-created worktree. Even the picker's re-entry path suffers the same mismatch if the selected worktree differs from the session's original. If a resumed session is what you want, run `claude --resume ID` directly — bypass ccw.
 
 ## 📦 Installation
 

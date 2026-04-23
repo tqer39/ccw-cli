@@ -2,6 +2,7 @@ package picker
 
 import (
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tqer39/ccw-cli/internal/worktree"
@@ -40,3 +41,63 @@ func badgeLabel(s worktree.Status) (colored, plain string) {
 }
 
 func noColor() bool { return os.Getenv("NO_COLOR") != "" }
+
+// PRBadge renders a PR state badge. Upstream states from `gh pr list` are
+// OPEN / DRAFT / MERGED / CLOSED; unknown values fall back to a lowercased
+// bracketed label with no color.
+func PRBadge(state string) string {
+	if noColor() {
+		return "[" + strings.ToLower(state) + "]"
+	}
+	fg, bg, ok := prBadgeColor(state)
+	if !ok {
+		return "[" + strings.ToLower(state) + "]"
+	}
+	return lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color(fg)).
+		Background(lipgloss.Color(bg)).
+		Render("[" + strings.ToUpper(state) + "]")
+}
+
+// PRCellStyle returns the style that wraps the full PR cell
+// (badge + `#N "title"`) with a dim state-tinted background.
+// Returns an empty style when NO_COLOR is set or state is unknown.
+func PRCellStyle(state string) lipgloss.Style {
+	if noColor() {
+		return lipgloss.NewStyle()
+	}
+	bg, ok := prCellBackground(state)
+	if !ok {
+		return lipgloss.NewStyle()
+	}
+	return lipgloss.NewStyle().Background(lipgloss.Color(bg))
+}
+
+func prBadgeColor(state string) (fg, bg string, ok bool) {
+	switch state {
+	case "OPEN":
+		return "0", "2", true
+	case "DRAFT":
+		return "15", "8", true
+	case "MERGED":
+		return "15", "5", true
+	case "CLOSED":
+		return "15", "1", true
+	}
+	return "", "", false
+}
+
+func prCellBackground(state string) (string, bool) {
+	switch state {
+	case "OPEN":
+		return "22", true
+	case "DRAFT":
+		return "237", true
+	case "MERGED":
+		return "53", true
+	case "CLOSED":
+		return "52", true
+	}
+	return "", false
+}
