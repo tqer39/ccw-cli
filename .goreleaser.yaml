@@ -1,0 +1,43 @@
+version: 2
+
+project_name: ccw
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: ccw
+    main: ./cmd/ccw
+    binary: ccw
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/tqer39/ccw-cli/internal/version.Version={{.Version}}
+      - -X github.com/tqer39/ccw-cli/internal/version.Commit={{.ShortCommit}}
+      - -X github.com/tqer39/ccw-cli/internal/version.Date={{.Date}}
+
+archives:
+  - id: ccw
+    ids: [ccw]
+    formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
