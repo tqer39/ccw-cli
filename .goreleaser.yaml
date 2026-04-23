@@ -41,3 +41,34 @@ checksum:
 
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - "^style:"
+
+brews:
+  - name: ccw
+    ids: [ccw]
+    repository:
+      owner: tqer39
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/tqer39/ccw-cli"
+    description: "Launch Claude Code in an isolated git worktree"
+    license: "MIT"
+    commit_author:
+      name: goreleaser-bot
+      email: bot@goreleaser.com
+    install: |
+      bin.install "ccw"
+    test: |
+      system "#{bin}/ccw", "-v"
