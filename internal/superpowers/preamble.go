@@ -1,5 +1,5 @@
-// Package superpowers handles the optional superpowers plugin preamble,
-// plugin presence detection, and .gitignore augmentation used by `ccw -s`.
+// Package superpowers handles the optional superpowers plugin preamble
+// and plugin presence detection used by `ccw -s`.
 package superpowers
 
 import _ "embed"
