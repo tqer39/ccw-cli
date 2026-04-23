@@ -64,7 +64,7 @@ func run(flags cli.Flags) int {
 	}
 	_ = gitx.SetOriginHead(mainRepo)
 
-	preamble, err := maybeSuperpowers(flags.Superpowers, interactive)
+	preamble, err := maybeSuperpowers(flags.Superpowers, interactive, flags.AssumeYes)
 	if err != nil {
 		ui.Error("%v", err)
 		return 1
@@ -237,7 +237,7 @@ func resolveMainRepo() (string, error) {
 	return mainRepo, nil
 }
 
-func maybeSuperpowers(enabled bool, interactive bool) (string, error) {
+func maybeSuperpowers(enabled bool, interactive, assumeYes bool) (string, error) {
 	if !enabled {
 		return "", nil
 	}
@@ -245,7 +245,7 @@ func maybeSuperpowers(enabled bool, interactive bool) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve HOME: %w", err)
 	}
-	if err := superpowers.EnsureInstalled(os.Stdin, os.Stderr, home, interactive); err != nil {
+	if err := superpowers.EnsureInstalled(os.Stdin, os.Stderr, home, interactive, assumeYes); err != nil {
 		return "", fmt.Errorf("superpowers install: %w", err)
 	}
 	return superpowers.Preamble(), nil
