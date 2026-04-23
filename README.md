@@ -107,12 +107,13 @@ go vet ./...
 go build ./cmd/ccw
 ```
 
-Pre-commit hooks are managed by [lefthook](https://github.com/evilmartians/lefthook):
+Set up the full dev environment (Homebrew required) with:
 
 ```bash
-brew install lefthook yamllint actionlint
-lefthook install
+make bootstrap
 ```
+
+This installs the Homebrew packages listed in [`Brewfile`](Brewfile), provisions Go / Node via [`mise`](https://mise.jdx.dev/), and enables [lefthook](https://github.com/evilmartians/lefthook) pre-commit hooks.
 
 See [`docs/assets/picker-demo-setup.sh`](docs/assets/picker-demo-setup.sh) + [`picker-demo.tape`](docs/assets/picker-demo.tape) to regenerate the demo GIF with [vhs](https://github.com/charmbracelet/vhs).
 
