@@ -107,12 +107,13 @@ go vet ./...
 go build ./cmd/ccw
 ```
 
-pre-commit は [lefthook](https://github.com/evilmartians/lefthook) で管理:
+開発環境は 1 コマンドで整います（Homebrew 必須）:
 
 ```bash
-brew install lefthook yamllint actionlint
-lefthook install
+make bootstrap
 ```
+
+[`Brewfile`](../Brewfile) の Homebrew パッケージをインストールし、[`mise`](https://mise.jdx.dev/) で Go / Node を用意、[lefthook](https://github.com/evilmartians/lefthook) の pre-commit フックを有効化します。
 
 GIF の再生成は [`docs/assets/picker-demo-setup.sh`](assets/picker-demo-setup.sh) + [`picker-demo.tape`](assets/picker-demo.tape) を [vhs](https://github.com/charmbracelet/vhs) で実行してください。
 
