@@ -90,6 +90,7 @@ type Model struct {
 	selection     Selection
 	width         int
 	height        int
+	ghAvailable   bool
 	prs           map[string]gh.PRInfo
 	prUnavailable bool
 	bulkFilter    map[worktree.Status]bool
@@ -157,7 +158,9 @@ func New(infos []worktree.Info) Model {
 	l.Title = "ccw worktrees"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
-	return Model{state: stateList, infos: infos, list: l}
+	// Probe gh availability once at construction. View() runs on every render,
+	// so caching here avoids spawning `gh auth status` per keystroke.
+	return Model{state: stateList, infos: infos, list: l, ghAvailable: gh.Available()}
 }
 
 // Action returns the action the user chose (valid after the program exits).
@@ -177,7 +180,7 @@ func (m Model) Bulk() BulkDeletion {
 
 // Init implements tea.Model.
 func (m Model) Init() tea.Cmd {
-	if !gh.Available() {
+	if !m.ghAvailable {
 		return nil
 	}
 	branches := make([]string, 0, len(m.infos))

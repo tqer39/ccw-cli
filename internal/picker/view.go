@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/tqer39/ccw-cli/internal/gh"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
@@ -14,7 +13,7 @@ func (m Model) View() string {
 	switch m.state {
 	case stateList:
 		base := m.list.View()
-		if !gh.Available() {
+		if !m.ghAvailable {
 			return base + "\n\n💡 Install gh to see PR titles here"
 		}
 		return base
