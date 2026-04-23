@@ -93,10 +93,9 @@ make release-clean
 3. `version` 入力に `vX.Y.Z` (例: `v0.1.0`) を入れて実行
 4. workflow 内で以下が自動実行される:
    - `version` 形式チェック（`^v\d+\.\d+\.\d+(-.+)?$`）
-   - `gh release create --draft --generate-notes` で **GitHub Release と tag を同時に作成**（REST API 経由、tag 作成は GitHub 側）
-   - goreleaser が既存 draft release に 4 archive + checksums を append
+   - `gh release create --generate-notes` で **GitHub Release と tag を同時に publish**（REST API 経由、tag 作成は GitHub 側）
+   - goreleaser が既存 release に 4 archive + checksums を append（`release.mode: append`）
    - homebrew-tap に `Formula/ccw.rb` を push
-   - `gh release edit --draft=false` で release を publish
 
 `gh workflow run release.yml -f version=v0.1.0 --repo tqer39/ccw-cli` でも同等。
 
