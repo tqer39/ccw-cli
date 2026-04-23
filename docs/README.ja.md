@@ -47,7 +47,7 @@ ccw
 ccw                                       # 既存 worktree を選ぶか、新規起動
 ccw -n                                    # picker をスキップして新規作成
 ccw -s                                    # 新規 + superpowers プリアンブル
-ccw -- --model claude-opus-4-7            # claude へ引数パススルー
+ccw -- --model <model-id>                 # パススルー: `--` 以降の引数はそのまま claude に渡す（モデル ID は一例）
 ccw --clean-all --status=pushed --dry-run # 一括削除対象をプレビュー
 ccw --clean-all --force -y                # 確認なしで全削除
 ```
@@ -62,7 +62,7 @@ ccw --clean-all --force -y                # 確認なしで全削除
 | 🟡 `[LOCAL]` | upstream なし、または ahead あり |
 | 🔴 `[DIRTY]` | 未コミットの変更がある |
 
-worktree を選択すると `resume` / `delete` / `back` のサブメニューに遷移。`[delete all]` / `[clean pushed]` / `[custom select]` は一括削除のショートカットで、dirty を含む場合は `--force` か、または 3 択確認 (`y` force · `s` dirty を除外 · `N` キャンセル) を経由します。
+worktree を選択すると `[r] run` / `[d] delete` / `[b] back` のサブメニューに遷移。`run` は選択した worktree で `claude --permission-mode auto` を新規起動するもので、Claude Code のセッション ID を引き継ぐ（`--resume` 相当の）操作は**行いません**。`[delete all]` / `[clean pushed]` / `[custom select]` は一括削除のショートカットで、dirty を含む場合は `--force` か、または 3 択確認 (`y` force · `s` dirty を除外 · `N` キャンセル) を経由します。
 
 PR 表示には [`gh`](https://cli.github.com/) が必要です。`gh` が無い場合も picker は動作し、ヒントを下部に表示。rate limit / ネットワークエラー時は PR 列だけを静かに隠します。
 

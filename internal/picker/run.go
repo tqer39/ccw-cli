@@ -43,7 +43,7 @@ func runTUI(infos []worktree.Info) (Action, Selection, BulkDeletion, error) {
 }
 
 func runFallback(infos []worktree.Info, in io.Reader, out io.Writer) (Action, Selection, error) {
-	_, _ = fmt.Fprintln(out, "Select a worktree to resume:")
+	_, _ = fmt.Fprintln(out, "Select a worktree:")
 	for i, w := range infos {
 		_, _ = fmt.Fprintf(out, "  %d) %s  (%s)  %s  %s\n", i+1, w.Branch, w.Status, fallbackIndicators(w), w.Path)
 	}

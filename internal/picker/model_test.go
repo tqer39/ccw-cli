@@ -33,7 +33,7 @@ func TestActionString(t *testing.T) {
 		want string
 	}{
 		{ActionCancel, "cancel"},
-		{ActionResume, "resume"},
+		{ActionResume, "run"},
 		{ActionDelete, "delete"},
 		{ActionNew, "new"},
 		{ActionBulkDelete, "bulk-delete"},

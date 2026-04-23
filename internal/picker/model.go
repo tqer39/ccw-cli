@@ -28,7 +28,7 @@ const (
 func (a Action) String() string {
 	switch a {
 	case ActionResume:
-		return "resume"
+		return "run"
 	case ActionDelete:
 		return "delete"
 	case ActionNew:
