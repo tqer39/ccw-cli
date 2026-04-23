@@ -1,49 +1,50 @@
 Output "/tmp/ccw-demo.gif"
 
 Set Shell "bash"
-Set FontSize 14
-Set Width 1100
-Set Height 700
-Set Padding 20
+Set FontSize 28
+Set Width 1280
+Set Height 780
+Set Padding 28
 Set Theme "Catppuccin Mocha"
-Set TypingSpeed 40ms
+Set TypingSpeed 110ms
+Set PlaybackSpeed 0.8
 
 Hide
-Type "cd /tmp/ccw-demo && export PATH=/tmp/fake-gh:$PATH && clear"
+Type "cd /tmp/ccw-demo && export PATH=/tmp/ccw-demo-bin:/tmp/fake-gh:$PATH && clear"
 Enter
-Sleep 400ms
+Sleep 800ms
 Show
 
-Type "/tmp/ccw-demo-bin"
+Type "ccw"
 Enter
-Sleep 2500ms
+Sleep 4500ms
 
 # show badges by moving selection across all 3 worktrees
 Down
-Sleep 900ms
+Sleep 1600ms
 Down
-Sleep 900ms
+Sleep 1600ms
 Up
-Sleep 700ms
+Sleep 1200ms
 
 # enter submenu on the currently-selected worktree
 Enter
-Sleep 1800ms
+Sleep 3200ms
 
 # return to picker list
 Type "b"
-Sleep 900ms
+Sleep 1600ms
 
 # navigate to [clean pushed] to trigger bulk-confirm
 Down 3
-Sleep 800ms
+Sleep 1400ms
 Enter
-Sleep 2500ms
+Sleep 4500ms
 
 # cancel bulk delete
 Type "N"
-Sleep 1200ms
+Sleep 2000ms
 
 # quit picker
 Type "q"
-Sleep 700ms
+Sleep 1200ms

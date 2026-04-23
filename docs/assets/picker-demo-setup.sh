@@ -6,8 +6,10 @@
 # only to populate the demo GIF with deterministic PR rows.
 set -euo pipefail
 
-# 1. build ccw to a fixed path referenced by the tape
-go build -o /tmp/ccw-demo-bin ./cmd/ccw
+# 1. build ccw into a dedicated bin dir so the tape can invoke it as `ccw`
+rm -rf /tmp/ccw-demo-bin
+mkdir -p /tmp/ccw-demo-bin
+go build -o /tmp/ccw-demo-bin/ccw ./cmd/ccw
 
 # 2. throwaway demo repo with a bare origin
 rm -rf /tmp/ccw-demo /tmp/ccw-demo-origin
