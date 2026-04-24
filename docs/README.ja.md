@@ -119,11 +119,6 @@ make bootstrap
 
 GIF の再生成は [`docs/assets/picker-demo-setup.sh`](assets/picker-demo-setup.sh) + [`picker-demo.tape`](assets/picker-demo.tape) を [vhs](https://github.com/charmbracelet/vhs) で実行してください。
 
-## 🗺️ ロードマップ
-
-- シェル補完 (bash / zsh)
-- Windows サポート
-
 ## 🤖 作成ツール
 
 このプロジェクトは [Claude Code](https://docs.claude.com/claude-code) + Claude **Opus 4.7** で作成しました。

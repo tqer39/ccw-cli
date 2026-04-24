@@ -119,11 +119,6 @@ This installs the Homebrew packages listed in [`Brewfile`](Brewfile), provisions
 
 See [`docs/assets/picker-demo-setup.sh`](docs/assets/picker-demo-setup.sh) + [`picker-demo.tape`](docs/assets/picker-demo.tape) to regenerate the demo GIF with [vhs](https://github.com/charmbracelet/vhs).
 
-## 🗺️ Roadmap
-
-- Shell completion (bash / zsh)
-- Windows support
-
 ## 🤖 Built With
 
 This project was built with [Claude Code](https://docs.claude.com/claude-code) using Claude **Opus 4.7**.
