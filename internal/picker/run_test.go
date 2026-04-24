@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/x/exp/teatest"
+	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/exp/teatest/v2"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
@@ -88,8 +88,8 @@ func TestTUI_ResumeFirstWorktree(t *testing.T) {
 		{Path: "/a/.claude/worktrees/feat", Branch: "feat", Status: worktree.StatusPushed},
 	}
 	tm := teatestModel(t, infos)
-	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	tm.Send(tea.KeyPressMsg{Code: tea.KeyEnter})
+	tm.Send(tea.KeyPressMsg{Code: 'r', Text: "r"})
 
 	final, ok := tm.FinalModel(t, teatest.WithFinalTimeout(5*time.Second)).(Model)
 	if !ok {
@@ -108,9 +108,9 @@ func TestTUI_DeleteDirtyForces(t *testing.T) {
 		{Path: "/a/.claude/worktrees/feat", Branch: "feat", Status: worktree.StatusDirty},
 	}
 	tm := teatestModel(t, infos)
-	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	tm.Send(tea.KeyPressMsg{Code: tea.KeyEnter})
+	tm.Send(tea.KeyPressMsg{Code: 'd', Text: "d"})
+	tm.Send(tea.KeyPressMsg{Code: 'y', Text: "y"})
 
 	final, ok := tm.FinalModel(t, teatest.WithFinalTimeout(5*time.Second)).(Model)
 	if !ok {
@@ -129,7 +129,7 @@ func TestTUI_QCancels(t *testing.T) {
 		{Path: "/a/.claude/worktrees/feat", Branch: "feat", Status: worktree.StatusPushed},
 	}
 	tm := teatestModel(t, infos)
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	tm.Send(tea.KeyPressMsg{Code: 'q', Text: "q"})
 
 	final, ok := tm.FinalModel(t, teatest.WithFinalTimeout(5*time.Second)).(Model)
 	if !ok {

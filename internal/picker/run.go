@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
@@ -30,7 +30,7 @@ func Run(mainRepo string, interactive bool, in io.Reader, out io.Writer) (Action
 }
 
 func runTUI(infos []worktree.Info) (Action, Selection, BulkDeletion, error) {
-	p := tea.NewProgram(New(infos), tea.WithAltScreen())
+	p := tea.NewProgram(New(infos))
 	final, err := p.Run()
 	if err != nil {
 		return ActionCancel, Selection{}, BulkDeletion{}, fmt.Errorf("picker run: %w", err)
