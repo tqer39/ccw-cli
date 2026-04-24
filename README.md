@@ -55,15 +55,26 @@ Run `ccw --help` for the full flag reference.
 
 ### Worktree picker
 
+Worktree status badge:
+
 | Badge | Meaning |
 |---|---|
 | 🟢 `[PUSHED]` | Clean, upstream tracked, 0 commits ahead |
 | 🟡 `[LOCAL]` | No upstream, or ahead of upstream |
 | 🔴 `[DIRTY]` | Working tree has uncommitted changes |
 
+PR state badge (shown only when [`gh`](https://cli.github.com/) is installed and authenticated):
+
+| Badge | Meaning |
+|---|---|
+| 🟩 `[OPEN]` | PR is open and awaiting review / merge |
+| ⬛ `[DRAFT]` | PR is a draft |
+| 🟪 `[MERGED]` | PR has been merged |
+| 🟥 `[CLOSED]` | PR was closed without merging |
+
 Selecting a worktree opens `[r] run` / `[d] delete` / `[b] back`. `run` launches a fresh `claude --permission-mode auto` in that worktree — ccw does **not** reuse Claude Code session IDs (no `--resume` under the hood). Bulk shortcuts (`[delete all]`, `[clean pushed]`, `[custom select]`) remove many at once; dirty items require either `--force` or a three-choice confirm (`y` force · `s` skip dirty · `N` cancel).
 
-PR display requires [`gh`](https://cli.github.com/). Without `gh`, the picker stays functional and shows a hint; rate-limit / network failures hide the PR column silently.
+Without `gh`, the picker stays functional and shows a hint; rate-limit / network failures hide the PR column silently.
 
 > ⚠️ **Passing `--resume` through `--` is unsupported.**
 > `ccw -n -- --resume ID` and `ccw -s -- --resume ID` combine `claude --worktree` (new worktree) with `--resume` (continue a prior session); the resumed transcript's file references won't match the freshly-created worktree. Even the picker's re-entry path suffers the same mismatch if the selected worktree differs from the session's original. If a resumed session is what you want, run `claude --resume ID` directly — bypass ccw.
@@ -87,10 +98,10 @@ Make sure `~/.local/bin` is on your `PATH`.
 
 ### Requirements
 
-- `git`
+- [`git`](https://git-scm.com/)
 - [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.49` — the `--worktree` flag that ccw relies on was introduced in 2.1.49 (2026-02-19). ccw offers to install `claude` via npm / brew if missing.
 - *(optional)* [`gh`](https://cli.github.com/) — enables PR info in the picker
-- *(optional)* superpowers plugin — auto-checked when `-s` is used
+- *(optional)* [superpowers](https://github.com/obra/superpowers) plugin — auto-checked when `-s` is used
 
 ## ⚙️ Environment
 
