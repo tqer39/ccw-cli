@@ -55,15 +55,26 @@ ccw --clean-all --force -y                # 確認なしで全削除
 
 ### Worktree picker
 
+Worktree 状態バッジ:
+
 | バッジ | 意味 |
 |---|---|
 | 🟢 `[PUSHED]` | clean、upstream 追従、ahead 0 |
 | 🟡 `[LOCAL]` | upstream なし、または ahead あり |
 | 🔴 `[DIRTY]` | 未コミットの変更がある |
 
+PR 状態バッジ（[`gh`](https://cli.github.com/) がインストール済みかつ認証済みの場合のみ表示）:
+
+| バッジ | 意味 |
+|---|---|
+| 🟩 `[OPEN]` | オープン中の PR（レビュー / マージ待ち） |
+| ⬛ `[DRAFT]` | ドラフト PR |
+| 🟪 `[MERGED]` | マージ済みの PR |
+| 🟥 `[CLOSED]` | マージされずにクローズされた PR |
+
 worktree を選択すると `[r] run` / `[d] delete` / `[b] back` のサブメニューに遷移。`run` は選択した worktree で `claude --permission-mode auto` を新規起動するもので、Claude Code のセッション ID を引き継ぐ（`--resume` 相当の）操作は**行いません**。`[delete all]` / `[clean pushed]` / `[custom select]` は一括削除のショートカットで、dirty を含む場合は `--force` か、または 3 択確認 (`y` force · `s` dirty を除外 · `N` キャンセル) を経由します。
 
-PR 表示には [`gh`](https://cli.github.com/) が必要です。`gh` が無い場合も picker は動作し、ヒントを下部に表示。rate limit / ネットワークエラー時は PR 列だけを静かに隠します。
+`gh` が無い場合も picker は動作し、ヒントを下部に表示。rate limit / ネットワークエラー時は PR 列だけを静かに隠します。
 
 > ⚠️ **`-- --resume ID` のパススルーは非推奨です。**
 > `ccw -n -- --resume ID` や `ccw -s -- --resume ID` は `claude --worktree`（新 worktree 作成）と `--resume`（過去セッション継続）を同時に使うことになり、resume された会話中のファイル参照が新 worktree の実体と合いません。picker 経由で既存 worktree に再入場する場合も、選んだ worktree と session 元の worktree が違えば同様のズレが出ます。過去セッションを resume したいときは ccw を介さず直接 `claude --resume ID` を呼んでください。
@@ -87,10 +98,10 @@ go build -o ~/.local/bin/ccw ~/ccw-cli/cmd/ccw
 
 ### 依存
 
-- `git`
+- [`git`](https://git-scm.com/)
 - [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.49` — ccw が利用する `--worktree` フラグは 2.1.49 (2026-02-19) で追加されました。未導入なら起動時に npm / brew で入れるかを確認します。
 - *(optional)* [`gh`](https://cli.github.com/) — picker で PR 情報を表示
-- *(optional)* superpowers プラグイン — `-s` 利用時に自動チェック
+- *(optional)* [superpowers](https://github.com/obra/superpowers) プラグイン — `-s` 利用時に自動チェック
 
 ## ⚙️ 環境変数
 
