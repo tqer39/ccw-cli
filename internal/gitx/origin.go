@@ -42,3 +42,13 @@ func ParseOriginURL(rawURL string) (string, string, error) {
 	repo := parts[len(parts)-1]
 	return owner, repo, nil
 }
+
+// OriginURL returns the URL of the `origin` remote, or "" when not configured.
+// The empty/no-origin case is treated as a normal branch (no error).
+func OriginURL(mainRepo string) (string, error) {
+	out, err := OutputSilent(mainRepo, "remote", "get-url", "origin")
+	if err != nil {
+		return "", nil
+	}
+	return strings.TrimSpace(out), nil
+}

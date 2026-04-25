@@ -2,6 +2,29 @@ package gitx
 
 import "testing"
 
+func TestOriginURL_Configured(t *testing.T) {
+	dir := initRepo(t)
+	mustRun(t, dir, "git", "remote", "add", "origin", "git@github.com:tqer39/ccw-cli.git")
+	got, err := OriginURL(dir)
+	if err != nil {
+		t.Fatalf("OriginURL: %v", err)
+	}
+	if got != "git@github.com:tqer39/ccw-cli.git" {
+		t.Errorf("OriginURL = %q, want %q", got, "git@github.com:tqer39/ccw-cli.git")
+	}
+}
+
+func TestOriginURL_NotConfigured(t *testing.T) {
+	dir := initRepo(t)
+	got, err := OriginURL(dir)
+	if err != nil {
+		t.Fatalf("OriginURL on no-origin repo: want nil error, got %v", err)
+	}
+	if got != "" {
+		t.Errorf("OriginURL = %q, want \"\"", got)
+	}
+}
+
 func TestParseOriginURL(t *testing.T) {
 	cases := []struct {
 		name      string
