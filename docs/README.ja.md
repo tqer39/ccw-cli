@@ -72,12 +72,26 @@ PR 状態バッジ（[`gh`](https://cli.github.com/) がインストール済み
 | 🟪 `[MERGED]` | マージ済みの PR |
 | 🟥 `[CLOSED]` | マージされずにクローズされた PR |
 
-worktree を選択すると `[r] run` / `[d] delete` / `[b] back` のサブメニューに遷移。`run` は選択した worktree で `claude --permission-mode auto` を新規起動するもので、Claude Code のセッション ID を引き継ぐ（`--resume` 相当の）操作は**行いません**。`[delete all]` / `[clean pushed]` / `[custom select]` は一括削除のショートカットで、dirty を含む場合は `--force` か、または 3 択確認 (`y` force · `s` dirty を除外 · `N` キャンセル) を経由します。
+セッションバッジ:
+
+| バッジ | 意味 |
+|---|---|
+| 💬 `RESUME` | 過去のセッションログがあり、`run` で会話を復元できる |
+| ⚡ `NEW`    | セッションログ無し。`run` は新規起動 |
+
+worktree を選択すると `[r] run` / `[d] delete` / `[b] back` のサブメニューに遷移。`run` はセッションログが残っていれば `claude --continue` で**過去会話を復元**、無ければ `claude -n <worktree名>` で新規起動します。`[delete all]` / `[clean pushed]` / `[custom select]` は一括削除のショートカットで、dirty を含む場合は `--force` か、または 3 択確認 (`y` force · `s` dirty を除外 · `N` キャンセル) を経由します。
 
 `gh` が無い場合も picker は動作し、ヒントを下部に表示。rate limit / ネットワークエラー時は PR 列だけを静かに隠します。
 
-> ⚠️ **`-- --resume ID` のパススルーは非推奨です。**
-> `ccw -n -- --resume ID` や `ccw -s -- --resume ID` は `claude --worktree`（新 worktree 作成）と `--resume`（過去セッション継続）を同時に使うことになり、resume された会話中のファイル参照が新 worktree の実体と合いません。picker 経由で既存 worktree に再入場する場合も、選んだ worktree と session 元の worktree が違えば同様のズレが出ます。過去セッションを resume したいときは ccw を介さず直接 `claude --resume ID` を呼んでください。
+### 命名規約
+
+ccw は新規 worktree を作るとき、worktree 名と Claude Code のセッション名を 1:1 で揃えます:
+
+- ディレクトリ: `<repo>/.claude/worktrees/<name>/`
+- ブランチ: `worktree-<name>`
+- セッション名: `<name>`（`claude -n <name>` で設定）
+
+`<name>` は `quick-falcon-7bd2` のようにジェネレータが生成します。手動で `/rename` した場合も ccw は追跡しません。`--continue` は cwd 基準で動くので会話復元には影響しません。
 
 ## 📦 インストール
 
@@ -99,7 +113,7 @@ go build -o ~/.local/bin/ccw ~/ccw-cli/cmd/ccw
 ### 依存
 
 - [`git`](https://git-scm.com/)
-- [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.49` — ccw が利用する `--worktree` フラグは 2.1.49 (2026-02-19) で追加されました。未導入なら起動時に npm / brew で入れるかを確認します。
+- [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.118` — ccw は `--worktree <name>` と `-n <name>` を併用するため、2.1.118 以降で動作確認済みです。未導入なら起動時に npm / brew で入れるかを確認します。
 - *(optional)* [`gh`](https://cli.github.com/) — picker で PR 情報を表示
 - *(optional)* [superpowers](https://github.com/obra/superpowers) プラグイン — `-s` 利用時に自動チェック
 
