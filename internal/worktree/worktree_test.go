@@ -46,6 +46,7 @@ func TestStatus_String(t *testing.T) {
 		{StatusPushed, "pushed"},
 		{StatusLocalOnly, "local-only"},
 		{StatusDirty, "dirty"},
+		{StatusPrunable, "prunable"},
 	}
 	for _, tc := range cases {
 		if got := tc.s.String(); got != tc.want {
@@ -146,6 +147,39 @@ func TestRemove_Integration(t *testing.T) {
 
 func writeFile(path, body string) error {
 	return os.WriteFile(path, []byte(body), 0o644)
+}
+
+func TestList_PrunableEntryDoesNotTouchDisk(t *testing.T) {
+	main := initMainRepo(t)
+	wt := addWorktree(t, main, "doomed")
+
+	// Delete the worktree dir so git marks it prunable.
+	if err := os.RemoveAll(wt); err != nil {
+		t.Fatalf("RemoveAll: %v", err)
+	}
+
+	infos, err := List(main)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	var found bool
+	for _, in := range infos {
+		if in.Branch == "doomed-branch" {
+			found = true
+			if in.Status != StatusPrunable {
+				t.Errorf("Status = %s, want prunable", in.Status)
+			}
+			if in.AheadCount != 0 || in.BehindCount != 0 || in.DirtyCount != 0 {
+				t.Errorf("counts should be zero for prunable, got %+v", in)
+			}
+			if in.HasSession {
+				t.Errorf("HasSession should be false for prunable")
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("doomed-branch not in List() output: %+v", infos)
+	}
 }
 
 func TestList_PopulatesHasSession(t *testing.T) {

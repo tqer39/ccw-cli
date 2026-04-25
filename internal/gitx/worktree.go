@@ -7,8 +7,9 @@ import (
 
 // WorktreeEntry represents one record from `git worktree list --porcelain`.
 type WorktreeEntry struct {
-	Path   string
-	Branch string // without "refs/heads/" prefix; empty for detached HEAD
+	Path     string
+	Branch   string // without "refs/heads/" prefix; empty for detached HEAD
+	Prunable bool   // true when git tagged this entry with `prunable`
 }
 
 // ListRaw returns every worktree attached to mainRepo. Caller is responsible
@@ -41,6 +42,8 @@ func ParsePorcelain(s string) []WorktreeEntry {
 				strings.TrimPrefix(line, "branch "),
 				"refs/heads/",
 			)
+		case line == "prunable" || strings.HasPrefix(line, "prunable "):
+			cur.Prunable = true
 		case line == "":
 			flush()
 		}
@@ -59,6 +62,16 @@ func RemoveWorktree(mainRepo, path string, force bool) error {
 	args = append(args, path)
 	if err := Run(mainRepo, args...); err != nil {
 		return fmt.Errorf("git worktree remove: %w", err)
+	}
+	return nil
+}
+
+// Prune calls `git -C mainRepo worktree prune`. This removes admin files for
+// worktrees whose working directory has been deleted (i.e. those flagged as
+// `prunable` in `git worktree list --porcelain`).
+func Prune(mainRepo string) error {
+	if err := Run(mainRepo, "worktree", "prune"); err != nil {
+		return fmt.Errorf("git worktree prune: %w", err)
 	}
 	return nil
 }

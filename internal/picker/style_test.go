@@ -3,6 +3,8 @@ package picker
 import (
 	"strings"
 	"testing"
+
+	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
 func TestPRBadge_NoColorLowercase(t *testing.T) {
@@ -73,5 +75,13 @@ func TestResumeBadge_Colored(t *testing.T) {
 	}
 	if !strings.Contains(got, "\x1b[") {
 		t.Errorf("ResumeBadge(false) expected ANSI escape when NO_COLOR unset, got %q", got)
+	}
+}
+
+func TestBadge_PrunableNoColor(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	got := Badge(worktree.StatusPrunable)
+	if got != "[prune] " {
+		t.Errorf("Badge(prunable) NO_COLOR = %q, want %q", got, "[prune] ")
 	}
 }
