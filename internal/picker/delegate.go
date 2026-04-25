@@ -12,13 +12,13 @@ import (
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
-// rowDelegate renders items as two lines: meta (badge/branch/indicators/→/PR)
-// on top, path below.
+// rowDelegate renders worktree items as four lines: header (resume + name +
+// status + indicators), branch, pr, path.
 type rowDelegate struct {
 	prUnavailable bool
 }
 
-func (d rowDelegate) Height() int                             { return 2 }
+func (d rowDelegate) Height() int                             { return 4 }
 func (d rowDelegate) Spacing() int                            { return 1 }
 func (d rowDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 
@@ -31,16 +31,6 @@ func (d rowDelegate) Render(w io.Writer, m list.Model, index int, item list.Item
 	_, _ = fmt.Fprint(w, renderRow(li, m.Width(), d.prUnavailable, selected))
 }
 
-// arrowGlyph returns the worktree→PR separator. ASCII `->` under NO_COLOR
-// keeps width predictable across terminals without Unicode.
-func arrowGlyph() string {
-	if noColor() {
-		return "->"
-	}
-	return "→"
-}
-
-// renderRow is a pure function used by the delegate and tests.
 func renderRow(li listItem, width int, prUnavailable bool, selected bool) string {
 	prefix := "  "
 	if selected {
@@ -51,21 +41,56 @@ func renderRow(li listItem, width int, prUnavailable bool, selected bool) string
 		return prefix + li.title + "\n  " + li.desc
 	}
 	wt := li.wt
-	badge := Badge(wt.Status)
+	name := worktreeName(wt.Path)
+	resume := ResumeBadge(wt.HasSession)
+	status := Badge(wt.Status)
 	indicators := fmt.Sprintf("↑%d ↓%d", wt.AheadCount, wt.BehindCount)
 	if wt.Status == worktree.StatusDirty {
 		indicators += fmt.Sprintf(" ✎%d", wt.DirtyCount)
 	}
 
-	meta := strings.TrimRight(fmt.Sprintf("%s%s  %-24s %s", prefix, badge, wt.Branch, indicators), " ")
-	top := meta
+	header := fmt.Sprintf("%s%s · %s", prefix, resume, name)
+	right := fmt.Sprintf("%s  %s", status, indicators)
+	header = padBetween(header, right, width)
+
+	branchLine := fmt.Sprintf("    branch:  %s", wt.Branch)
+	prCell := ""
 	if !prUnavailable {
-		top = meta + "  " + arrowGlyph() + "  " + renderPRCell(li.pr)
+		prCell = renderPRCell(li.pr)
 	}
-	if width > 0 && lipgloss.Width(top) > width {
-		top = truncateToWidth(top, width)
+	prLine := "    pr:      " + prCell
+	pathLine := fmt.Sprintf("    path:    %s", wt.Path)
+
+	if width > 0 {
+		header = truncateToWidth(header, width)
+		branchLine = truncateToWidth(branchLine, width)
+		prLine = truncateToWidth(prLine, width)
+		pathLine = truncateToWidth(pathLine, width)
 	}
-	return top + "\n  " + wt.Path
+
+	return header + "\n" + branchLine + "\n" + prLine + "\n" + pathLine
+}
+
+// padBetween places left and right on the same line with spaces between so
+// that right is right-aligned at the given width. Falls back to a 2-space
+// separator when width is too small.
+func padBetween(left, right string, width int) string {
+	if width <= 0 {
+		return left + "  " + right
+	}
+	gap := width - lipgloss.Width(left) - lipgloss.Width(right)
+	if gap < 2 {
+		gap = 2
+	}
+	return left + strings.Repeat(" ", gap) + right
+}
+
+func worktreeName(path string) string {
+	idx := strings.LastIndex(path, "/")
+	if idx < 0 {
+		return path
+	}
+	return path[idx+1:]
 }
 
 // renderPRCell builds the PR portion of the row: either a state-tinted
@@ -90,7 +115,6 @@ func truncateToWidth(s string, n int) string {
 	if lipgloss.Width(s) <= n {
 		return s
 	}
-	// Naive byte-trim fallback: good enough for ASCII-heavy rows.
 	for len(s) > 0 && lipgloss.Width(s) > n {
 		s = s[:len(s)-1]
 	}
