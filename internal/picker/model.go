@@ -49,12 +49,14 @@ type Selection struct {
 	Status      worktree.Status
 	HasSession  bool
 	ForceDelete bool
+	IsPrunable  bool
 }
 
 // BulkDeletion describes the set of worktrees to remove in a bulk delete.
 type BulkDeletion struct {
-	Paths []string
-	Force bool
+	Paths    []string
+	Force    bool
+	RunPrune bool
 }
 
 // Icon maps a worktree.Status to a one-rune glyph (legacy API, kept for back-
@@ -176,10 +178,18 @@ func (m Model) Selection() Selection { return m.selection }
 // Bulk returns the bulk-delete descriptor (valid after ActionBulkDelete).
 func (m Model) Bulk() BulkDeletion {
 	paths := make([]string, 0, len(m.bulkTargets))
+	hasPrunable := false
 	for _, i := range m.bulkTargets {
-		paths = append(paths, m.infos[i].Path)
+		w := m.infos[i]
+		if w.Status == worktree.StatusPrunable {
+			hasPrunable = true
+			// git worktree remove cannot operate on prunable entries
+			// (path is gone). They are handled by Prune at the end.
+			continue
+		}
+		paths = append(paths, w.Path)
 	}
-	return BulkDeletion{Paths: paths, Force: m.bulkForce}
+	return BulkDeletion{Paths: paths, Force: m.bulkForce, RunPrune: hasPrunable}
 }
 
 // Init implements tea.Model.

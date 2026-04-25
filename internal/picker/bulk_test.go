@@ -49,3 +49,23 @@ func TestHasDirty_And_DropDirty(t *testing.T) {
 		t.Errorf("DropDirty: %v", got)
 	}
 }
+
+func TestHasPrunable_True(t *testing.T) {
+	infos := []worktree.Info{
+		{Path: "/a", Status: worktree.StatusPushed},
+		{Path: "/b", Status: worktree.StatusPrunable},
+	}
+	if !HasPrunable(infos, []int{0, 1}) {
+		t.Error("HasPrunable should return true when a prunable index is included")
+	}
+}
+
+func TestHasPrunable_False(t *testing.T) {
+	infos := []worktree.Info{
+		{Path: "/a", Status: worktree.StatusPushed},
+		{Path: "/b", Status: worktree.StatusDirty},
+	}
+	if HasPrunable(infos, []int{0, 1}) {
+		t.Error("HasPrunable should return false without prunable")
+	}
+}

@@ -34,3 +34,13 @@ func DropDirty(infos []worktree.Info, indices []int) []int {
 	}
 	return out
 }
+
+// HasPrunable reports whether any of the given indices references a prunable worktree.
+func HasPrunable(infos []worktree.Info, indices []int) bool {
+	for _, i := range indices {
+		if infos[i].Status == worktree.StatusPrunable {
+			return true
+		}
+	}
+	return false
+}
