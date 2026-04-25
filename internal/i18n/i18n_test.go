@@ -1,6 +1,10 @@
 package i18n
 
-import "testing"
+import (
+	"regexp"
+	"sort"
+	"testing"
+)
 
 func TestLoadCatalog_BothLanguagesParse(t *testing.T) {
 	en, err := loadCatalog(LangEN)
@@ -110,4 +114,80 @@ func TestT_UnknownKeyReturnsKey(t *testing.T) {
 	if got := T("does.not.exist"); got != "does.not.exist" {
 		t.Errorf("T(missing) = %q, want %q", got, "does.not.exist")
 	}
+}
+
+func TestCatalogParity_AllKeysPresentInBothLocales(t *testing.T) {
+	en, err := loadCatalog(LangEN)
+	if err != nil {
+		t.Fatalf("load en: %v", err)
+	}
+	ja, err := loadCatalog(LangJA)
+	if err != nil {
+		t.Fatalf("load ja: %v", err)
+	}
+	want := make(map[string]bool, len(AllKeys()))
+	for _, k := range AllKeys() {
+		want[string(k)] = true
+	}
+	delete(en, "meta.smoke")
+	delete(ja, "meta.smoke")
+
+	checkSetEquality(t, "en", want, keysOf(en))
+	checkSetEquality(t, "ja", want, keysOf(ja))
+}
+
+func TestCatalogParity_FormatVerbsMatch(t *testing.T) {
+	en, _ := loadCatalog(LangEN)
+	ja, _ := loadCatalog(LangJA)
+	verb := regexp.MustCompile(`%[+\-#0 ]*\d*\.?\d*[sdvqxXfgte%]`)
+	for _, k := range AllKeys() {
+		ev := verb.FindAllString(en[string(k)], -1)
+		jv := verb.FindAllString(ja[string(k)], -1)
+		if !equalSlices(ev, jv) {
+			t.Errorf("key %q: en verbs %v, ja verbs %v (must match exactly in order and type)", k, ev, jv)
+		}
+	}
+}
+
+func keysOf(m map[string]string) map[string]bool {
+	out := make(map[string]bool, len(m))
+	for k := range m {
+		out[k] = true
+	}
+	return out
+}
+
+func checkSetEquality(t *testing.T, label string, want, got map[string]bool) {
+	t.Helper()
+	var missing, extra []string
+	for k := range want {
+		if !got[k] {
+			missing = append(missing, k)
+		}
+	}
+	for k := range got {
+		if !want[k] {
+			extra = append(extra, k)
+		}
+	}
+	sort.Strings(missing)
+	sort.Strings(extra)
+	if len(missing) > 0 {
+		t.Errorf("%s catalog missing keys: %v", label, missing)
+	}
+	if len(extra) > 0 {
+		t.Errorf("%s catalog has extra keys not in AllKeys(): %v", label, extra)
+	}
+}
+
+func equalSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }

@@ -1,2 +1,97 @@
 meta:
   smoke: "english smoke value"
+
+tip:
+  rename: "Worktree name = session name; renaming with /rename is fine, ccw doesn't track it"
+  fromPR: "claude --from-pr <number> resumes a PR-linked session directly"
+  cleanAll: "--clean-all sweeps pushed worktrees in bulk"
+  passthrough: "ccw -- --model <id> passes flags through to claude"
+  resumeBadge: "The RESUME badge is derived from ~/.claude/projects/"
+
+help:
+  usage: |
+    Usage: ccw [options] [-- <claude-args>...]
+
+    Options:
+      -n, --new            Always start a new worktree (skip picker)
+      -s, --superpowers    Inject superpowers preamble (implies -n)
+      -v, --version        Show version
+      -h, --help           Show this help
+          --lang=<en|ja>   Force output language (overrides CCW_LANG and locale)
+
+    Bulk delete:
+          --clean-all        Bulk delete mode
+          --status=<filter>  all | pushed | local-only | dirty (default: all)
+          --force            Delete dirty worktrees with --force
+          --dry-run          Print targets and exit
+      -y, --yes              Skip confirmation prompts (--clean-all, -s plugin install)
+
+    Arguments after `--` are forwarded to `claude` verbatim.
+
+    Environment:
+      NO_COLOR=1           Disable colored output
+      CCW_DEBUG=1          Verbose debug logging
+      CCW_LANG=en|ja       Force output language
+
+    Exit codes:
+      0  success
+      1  user error / cancellation
+      *  passthrough from `claude`
+
+    Repository: https://github.com/tqer39/ccw-cli
+
+picker:
+  footer:
+    installGh: "💡 Install gh to see PR titles here"
+    tip: "💡 Tip: %s"
+  action:
+    menu: |
+      Selected: %s (%s)
+      Path:     %s
+
+      What to do?
+        [r] run    — start claude in this worktree
+        [d] delete — remove the worktree
+        [b] back   — return to list
+        [q] quit   — cancel
+  delete:
+    confirm: |
+      Delete worktree %s?
+        path:   %s
+        status: %s
+
+      This will run: %s
+
+      Confirm? [y/N]
+  prune:
+    single: |
+      Prune worktree %s?
+        path:   %s
+
+      This will run: git worktree prune
+
+      Confirm? [y/N]
+    bulkHead: "Prune %d prunable worktrees? (git worktree prune removes all of them at once)\n\n"
+    bulkLine: "  %s %s\n"
+    bulkFoot: "\nThis will run: git worktree prune\n\nConfirm? [y/N]\n"
+  bulk:
+    filterHead: "Select statuses to delete (toggle):\n\n"
+    filterLine: "  %s %s\n"
+    filterKeys: "  [p] pushed  [l] local-only  [d] dirty  [a] clear\n"
+    filterFoot: "  [enter] confirm  [q/esc] back\n"
+    confirmHead: "Delete %d worktrees?\n\n"
+    pruneNote: "\nℹ Prunable entries will be cleaned up via `git worktree prune` after the removals.\n"
+    dirtyWarn: |
+
+      ⚠ Dirty worktrees are included. `git worktree remove --force` is required.
+        [y] yes (include dirty, use --force)
+        [s] skip dirty (remove clean only)
+        [N] cancel
+    confirmYN: "\nConfirm? [y/N]\n"
+
+fallback:
+  header: "Select a worktree:"
+  line: "  %d) %s  (%s)  %s  %s\n"
+  new: "  n) new"
+  quit: "  q) quit"
+  prompt: "#? "
