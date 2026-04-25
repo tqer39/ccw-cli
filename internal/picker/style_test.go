@@ -58,10 +58,7 @@ func TestResumeBadge_HasSession(t *testing.T) {
 
 func TestResumeBadge_Colored(t *testing.T) {
 	t.Setenv("NO_COLOR", "")
-	prev := lipgloss.ColorProfile()
-	lipgloss.SetColorProfile(termenv.ANSI256)
-	t.Cleanup(func() { lipgloss.SetColorProfile(prev) })
-
+	// lipgloss v2 はプロファイルを Writer 層で管理するため ColorProfile/SetColorProfile は不要。
 	got := ResumeBadge(true)
 	if !strings.Contains(got, "RESUME") {
 		t.Errorf("ResumeBadge(true) = %q, want substring RESUME", got)
