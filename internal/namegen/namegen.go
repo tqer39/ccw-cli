@@ -35,6 +35,7 @@ var (
 	originURLFn     = gitx.OriginURL
 	defaultBranchFn = gitx.DefaultBranch
 	shortHashFn     = gitx.ShortHash
+	worktreeListFn  = gitx.ListRaw
 )
 
 // maxCollisionSuffix bounds numeric suffixes attempted before giving up.
@@ -107,22 +108,32 @@ func resolveOwnerRepo(mainRepo string) (string, string, error) {
 	return owner, repo, nil
 }
 
-// takenNames returns the set of worktree directory names already present
-// under <mainRepo>/.claude/worktrees/. Missing dir is treated as empty set.
+// takenNames returns names already in use, by union of:
+//   - directory entries under <mainRepo>/.claude/worktrees/
+//   - basenames of paths returned by `git worktree list --porcelain`
+//
+// A registered git worktree without a matching .claude/worktrees entry (e.g.
+// added outside ccw, or after manual cleanup) still collides with a fresh name.
 func takenNames(mainRepo string) (map[string]bool, error) {
+	out := map[string]bool{}
 	dir := filepath.Join(mainRepo, ".claude", "worktrees")
 	entries, err := os.ReadDir(dir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return map[string]bool{}, nil
+	switch {
+	case err == nil:
+		for _, e := range entries {
+			if e.IsDir() {
+				out[e.Name()] = true
+			}
 		}
+	case !os.IsNotExist(err):
 		return nil, fmt.Errorf("read worktrees dir: %w", err)
 	}
-	out := make(map[string]bool, len(entries))
-	for _, e := range entries {
-		if e.IsDir() {
-			out[e.Name()] = true
-		}
+	wts, err := worktreeListFn(mainRepo)
+	if err != nil {
+		return nil, fmt.Errorf("list git worktrees: %w", err)
+	}
+	for _, wt := range wts {
+		out[filepath.Base(wt.Path)] = true
 	}
 	return out, nil
 }

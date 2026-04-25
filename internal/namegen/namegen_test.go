@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"testing"
+
+	"github.com/tqer39/ccw-cli/internal/gitx"
 )
 
 func TestNormalize(t *testing.T) {
@@ -125,6 +127,7 @@ type fakes struct {
 	branchError  bool
 	shorthash    string
 	shorthashErr bool
+	worktrees    []gitx.WorktreeEntry
 }
 
 func withFakes(t *testing.T, f fakes) {
@@ -132,10 +135,12 @@ func withFakes(t *testing.T, f fakes) {
 	origOrigin := originURLFn
 	origBranch := defaultBranchFn
 	origHash := shortHashFn
+	origList := worktreeListFn
 	t.Cleanup(func() {
 		originURLFn = origOrigin
 		defaultBranchFn = origBranch
 		shortHashFn = origHash
+		worktreeListFn = origList
 	})
 	originURLFn = func(string) (string, error) { return f.origin, nil }
 	defaultBranchFn = func(string) (string, error) {
@@ -150,6 +155,7 @@ func withFakes(t *testing.T, f fakes) {
 		}
 		return f.shorthash, nil
 	}
+	worktreeListFn = func(string) ([]gitx.WorktreeEntry, error) { return f.worktrees, nil }
 }
 
 func mustMkdir(t *testing.T, root, rel string) {
@@ -219,5 +225,38 @@ func TestGenerate_CollisionWithExistingDir(t *testing.T) {
 	}
 	if got != "ccw-tqer39-ccw-cli-a3f2b1-2" {
 		t.Errorf("Generate = %q, want %q", got, "ccw-tqer39-ccw-cli-a3f2b1-2")
+	}
+}
+
+// TestGenerate_CollisionWithGitWorktree exercises the spec rule that names
+// registered with `git worktree list` count as taken even when no matching
+// .claude/worktrees directory exists.
+func TestGenerate_CollisionWithGitWorktree(t *testing.T) {
+	repo := t.TempDir()
+	withFakes(t, fakes{
+		origin:    "git@github.com:tqer39/ccw-cli.git",
+		branch:    "main",
+		shorthash: "a3f2b1",
+		worktrees: []gitx.WorktreeEntry{
+			{Path: "/tmp/elsewhere/ccw-tqer39-ccw-cli-a3f2b1"},
+		},
+	})
+	got, err := Generate(repo)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	if got != "ccw-tqer39-ccw-cli-a3f2b1-2" {
+		t.Errorf("Generate = %q, want %q", got, "ccw-tqer39-ccw-cli-a3f2b1-2")
+	}
+}
+
+func TestGenerate_ShortHashError(t *testing.T) {
+	withFakes(t, fakes{
+		origin:       "git@github.com:tqer39/ccw-cli.git",
+		branch:       "main",
+		shorthashErr: true,
+	})
+	if _, err := Generate(t.TempDir()); err == nil {
+		t.Fatal("Generate with short-hash error: want error, got nil")
 	}
 }

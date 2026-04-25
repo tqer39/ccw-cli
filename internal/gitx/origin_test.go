@@ -40,6 +40,8 @@ func TestParseOriginURL(t *testing.T) {
 		{"https with trailing slash", "https://github.com/tqer39/ccw-cli/", "tqer39", "ccw-cli", false},
 		{"gitlab nested", "https://gitlab.com/group/sub/repo.git", "sub", "repo", false},
 		{"ssh gitlab nested", "git@gitlab.com:group/sub/repo.git", "sub", "repo", false},
+		{"ssh:// scheme", "ssh://git@github.com/tqer39/ccw-cli.git", "tqer39", "ccw-cli", false},
+		{"git:// scheme", "git://github.com/tqer39/ccw-cli.git", "tqer39", "ccw-cli", false},
 		{"empty", "", "", "", true},
 		{"only host", "git@github.com:", "", "", true},
 		{"single segment", "https://example.com/repo.git", "", "", true},
