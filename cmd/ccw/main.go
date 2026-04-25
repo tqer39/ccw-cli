@@ -72,7 +72,11 @@ func run(flags cli.Flags) int {
 	}
 
 	if flags.NewWorktree {
-		name := namegen.Generate()
+		name, err := namegen.Generate(mainRepo)
+		if err != nil {
+			ui.Error("generate worktree name: %v", err)
+			return 1
+		}
 		code, err := claude.LaunchNew(mainRepo, name, preamble, flags.Passthrough)
 		if err != nil {
 			ui.Error("%v", err)
@@ -95,7 +99,11 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 		case picker.ActionCancel:
 			return 0
 		case picker.ActionNew:
-			name := namegen.Generate()
+			name, err := namegen.Generate(mainRepo)
+			if err != nil {
+				ui.Error("generate worktree name: %v", err)
+				return 1
+			}
 			code, err := claude.LaunchNew(mainRepo, name, "", passthrough)
 			if err != nil {
 				ui.Error("%v", err)
