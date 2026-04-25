@@ -21,6 +21,19 @@ func BuildNewArgs(name, preamble string, extra []string) []string {
 	return args
 }
 
+// BuildInWorktreeArgs is BuildNewArgs without `--worktree`. Use when cwd is
+// already an existing worktree, since passing `--worktree <name>` from inside
+// a worktree risks a name-collision error against the existing git registration.
+func BuildInWorktreeArgs(name, preamble string, extra []string) []string {
+	args := make([]string, 0, 4+len(extra)+2)
+	args = append(args, "--permission-mode", "auto", "-n", name)
+	args = append(args, extra...)
+	if preamble != "" {
+		args = append(args, "--", preamble)
+	}
+	return args
+}
+
 // BuildContinueArgs constructs argv for `claude --permission-mode auto --continue [extra...]`.
 func BuildContinueArgs(extra []string) []string {
 	args := make([]string, 0, 3+len(extra))
@@ -32,6 +45,11 @@ func BuildContinueArgs(extra []string) []string {
 // (0 on success, the child exit code on non-zero exit, -1 on exec error).
 func LaunchNew(cwd, name, preamble string, extra []string) (int, error) {
 	return runClaude(cwd, BuildNewArgs(name, preamble, extra))
+}
+
+// LaunchInWorktree execs claude with BuildInWorktreeArgs in cwd (no `--worktree`).
+func LaunchInWorktree(cwd, name, preamble string, extra []string) (int, error) {
+	return runClaude(cwd, BuildInWorktreeArgs(name, preamble, extra))
 }
 
 // Continue execs claude with BuildContinueArgs in cwd.

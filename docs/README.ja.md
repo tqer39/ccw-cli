@@ -113,7 +113,7 @@ go build -o ~/.local/bin/ccw ~/ccw-cli/cmd/ccw
 ### 依存
 
 - [`git`](https://git-scm.com/)
-- [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.118` — ccw は `--worktree <name>` と `-n <name>` を併用するため、2.1.118 以降で動作確認済みです。未導入なら起動時に npm / brew で入れるかを確認します。
+- [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.76` — ccw は `--worktree <name>` (2.1.49 で追加) と `-n <name>` (2.1.76 で追加) を併用します。未導入なら起動時に npm / brew で入れるかを確認します。
 - *(optional)* [`gh`](https://cli.github.com/) — picker で PR 情報を表示
 - *(optional)* [superpowers](https://github.com/obra/superpowers) プラグイン — `-s` 利用時に自動チェック
 

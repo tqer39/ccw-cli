@@ -113,7 +113,7 @@ Make sure `~/.local/bin` is on your `PATH`.
 ### Requirements
 
 - [`git`](https://git-scm.com/)
-- [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.118` — ccw uses `--worktree <name>` together with `-n <name>`, which was confirmed working from 2.1.118 onward. ccw offers to install `claude` via npm / brew if missing.
+- [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.76` — ccw uses `--worktree <name>` (added in 2.1.49) together with `-n <name>` (added in 2.1.76). ccw offers to install `claude` via npm / brew if missing.
 - *(optional)* [`gh`](https://cli.github.com/) — enables PR info in the picker
 - *(optional)* [superpowers](https://github.com/obra/superpowers) plugin — auto-checked when `-s` is used
 

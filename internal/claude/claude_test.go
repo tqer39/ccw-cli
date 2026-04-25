@@ -37,6 +37,22 @@ func TestBuildNewArgs_WithExtraAndPreamble(t *testing.T) {
 	}
 }
 
+func TestBuildInWorktreeArgs_NameOnly(t *testing.T) {
+	got := BuildInWorktreeArgs("foo", "", nil)
+	want := []string{"--permission-mode", "auto", "-n", "foo"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("BuildInWorktreeArgs:\n got  = %v\n want = %v", got, want)
+	}
+}
+
+func TestBuildInWorktreeArgs_WithExtraAndPreamble(t *testing.T) {
+	got := BuildInWorktreeArgs("foo", "hi", []string{"--model", "x"})
+	want := []string{"--permission-mode", "auto", "-n", "foo", "--model", "x", "--", "hi"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("BuildInWorktreeArgs both:\n got  = %v\n want = %v", got, want)
+	}
+}
+
 func TestBuildContinueArgs_Empty(t *testing.T) {
 	got := BuildContinueArgs(nil)
 	want := []string{"--permission-mode", "auto", "--continue"}

@@ -119,30 +119,34 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 }
 
 // runResume launches `claude --continue` when the worktree has a session log,
-// or `claude -n <name>` for fresh starts. Falls back to a new launch when
-// `--continue` exits non-zero (e.g. session file removed underfoot).
+// or `claude -n <name>` for fresh starts. The fresh-start path uses
+// LaunchInWorktree because cwd is already an existing worktree (passing
+// `--worktree <name>` from inside one risks a name-collision against git's
+// existing registration). The post-Continue fallback only fires when the
+// session log has actually disappeared between the picker check and Continue
+// returning — so a normal user quit or transient claude error surfaces its
+// exit code instead of silently restarting a fresh conversation.
 func runResume(sel picker.Selection, passthrough []string) int {
 	if !sel.HasSession {
-		name := worktreeName(sel.Path)
-		code, err := claude.LaunchNew(sel.Path, name, "", passthrough)
-		if err != nil {
-			ui.Error("%v", err)
-			return 1
-		}
-		return code
+		return launchInPlace(sel.Path, passthrough)
 	}
 	code, err := claude.Continue(sel.Path, passthrough)
 	if err != nil {
 		ui.Error("%v", err)
 		return 1
 	}
-	if code != 0 {
-		name := worktreeName(sel.Path)
-		code, err = claude.LaunchNew(sel.Path, name, "", passthrough)
-		if err != nil {
-			ui.Error("%v", err)
-			return 1
-		}
+	if code != 0 && !worktree.HasSession(sel.Path) {
+		return launchInPlace(sel.Path, passthrough)
+	}
+	return code
+}
+
+func launchInPlace(path string, passthrough []string) int {
+	name := worktreeName(path)
+	code, err := claude.LaunchInWorktree(path, name, "", passthrough)
+	if err != nil {
+		ui.Error("%v", err)
+		return 1
 	}
 	return code
 }

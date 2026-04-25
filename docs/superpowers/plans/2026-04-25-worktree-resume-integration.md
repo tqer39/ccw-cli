@@ -1298,16 +1298,27 @@ Expected: 既存ヒット（74 行付近、103 行付近）
 
 ```go
   case picker.ActionResume:
+   if !sel.HasSession {
+    // picker 時点でセッション無し → -n <name> で新規起動（cwd は既存
+    // worktree なので --worktree は省略）。
+    name := worktreeName(sel.Path)
+    code, err := claude.LaunchInWorktree(sel.Path, name, "", passthrough)
+    if err != nil {
+     ui.Error("%v", err)
+     return 1
+    }
+    return code
+   }
    code, err := claude.Continue(sel.Path, passthrough)
    if err != nil {
     ui.Error("%v", err)
     return 1
    }
-   if code != 0 && !sel.HasSession {
-    // HasSession=false なのに Resume パスを通った（picker から強制 run など）。
-    // セッション無し → --continue は失敗し得るので -n <name> でフォールバック。
+   // Continue 後にセッションが消失した場合のみフォールバック。
+   // 通常終了 (Ctrl+C) や transient エラーは exit code をそのまま返す。
+   if code != 0 && !worktree.HasSession(sel.Path) {
     name := worktreeName(sel.Path)
-    code, err = claude.LaunchNew(sel.Path, name, "", passthrough)
+    code, err = claude.LaunchInWorktree(sel.Path, name, "", passthrough)
     if err != nil {
      ui.Error("%v", err)
      return 1
