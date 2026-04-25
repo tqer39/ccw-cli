@@ -4,11 +4,11 @@ package tips
 import "math/rand/v2"
 
 var defaults = []string{
-	"worktree 名 = session 名。手で /rename しても ccw は何もしません",
-	"claude --from-pr <番号> で PR 連携セッションを直接 resume できます",
-	"--clean-all で push 済 worktree を一括削除",
-	"ccw -- --model <id> で claude にフラグを素通し",
-	"picker の RESUME バッジは ~/.claude/projects/ から判定しています",
+	"Worktree name = session name; renaming with /rename is fine, ccw doesn't track it",
+	"claude --from-pr <number> resumes a PR-linked session directly",
+	"--clean-all sweeps pushed worktrees in bulk",
+	"ccw -- --model <id> passes flags through to claude",
+	"The RESUME badge is derived from ~/.claude/projects/",
 }
 
 // Defaults returns a copy of the built-in TIPS set.
