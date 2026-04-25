@@ -110,6 +110,7 @@ func (m Model) bulkConfirmView() string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Delete %d worktrees?\n\n", len(m.bulkTargets))
 	hasDirty := HasDirty(m.infos, m.bulkTargets)
+	hasPrunable := HasPrunable(m.infos, m.bulkTargets)
 	dirtyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
 	for _, i := range m.bulkTargets {
 		w := m.infos[i]
@@ -118,6 +119,9 @@ func (m Model) bulkConfirmView() string {
 			line = dirtyStyle.Render(line)
 		}
 		b.WriteString(line)
+	}
+	if hasPrunable {
+		b.WriteString("\nℹ Prunable entries will be cleaned up via `git worktree prune` after the removals.\n")
 	}
 	if hasDirty {
 		b.WriteString("\n⚠ Dirty worktrees are included. `git worktree remove --force` is required.\n")

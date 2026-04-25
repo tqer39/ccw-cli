@@ -380,6 +380,40 @@ func TestDeleteConfirmView_PrunableMultipleEnumerates(t *testing.T) {
 	}
 }
 
+func TestUpdate_DeleteAll_WithPrunable_SetsRunPrune(t *testing.T) {
+	m := New([]worktree.Info{
+		{Branch: "a", Path: "/a", Status: worktree.StatusPushed},
+		{Branch: "p", Path: "/p", Status: worktree.StatusPrunable},
+	})
+	m.bulkTargets = []int{0, 1}
+	m.state = stateBulkConfirm
+	got, _ := m.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
+	mm := got.(Model)
+	if mm.Action() != ActionBulkDelete {
+		t.Errorf("Action = %s, want bulk-delete", mm.Action())
+	}
+	b := mm.Bulk()
+	if !b.RunPrune {
+		t.Error("RunPrune should be true when a prunable target is selected")
+	}
+	if len(b.Paths) != 1 || b.Paths[0] != "/a" {
+		t.Errorf("Paths = %v, want only /a (prunable excluded)", b.Paths)
+	}
+}
+
+func TestBulkConfirmView_ShowsPruneNote(t *testing.T) {
+	m := New([]worktree.Info{
+		{Branch: "a", Path: "/a", Status: worktree.StatusPushed},
+		{Branch: "p", Path: "/p", Status: worktree.StatusPrunable},
+	})
+	m.bulkTargets = []int{0, 1}
+	m.state = stateBulkConfirm
+	out := m.View().Content
+	if !strings.Contains(out, "git worktree prune") {
+		t.Errorf("bulkConfirmView with prunable target must mention git worktree prune:\n%s", out)
+	}
+}
+
 func TestView_ListRendersItems(t *testing.T) {
 	m := New([]worktree.Info{
 		{Path: "/a/.claude/worktrees/feat-x", Branch: "feat-x", Status: worktree.StatusPushed},
