@@ -44,9 +44,14 @@ func renderRow(li listItem, width int, prUnavailable bool, selected bool) string
 	name := worktreeName(wt.Path)
 	resume := ResumeBadge(wt.HasSession)
 	status := Badge(wt.Status)
-	indicators := fmt.Sprintf("↑%d ↓%d", wt.AheadCount, wt.BehindCount)
-	if wt.Status == worktree.StatusDirty {
-		indicators += fmt.Sprintf(" ✎%d", wt.DirtyCount)
+	var indicators string
+	switch wt.Status {
+	case worktree.StatusPrunable:
+		indicators = "(missing on disk)"
+	case worktree.StatusDirty:
+		indicators = fmt.Sprintf("↑%d ↓%d ✎%d", wt.AheadCount, wt.BehindCount, wt.DirtyCount)
+	default:
+		indicators = fmt.Sprintf("↑%d ↓%d", wt.AheadCount, wt.BehindCount)
 	}
 
 	header := fmt.Sprintf("%s%s · %s", prefix, resume, name)

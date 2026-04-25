@@ -65,4 +65,19 @@ exit 1
 GH
 chmod +x /tmp/fake-gh/gh
 
+# 5. fake HOME so the picker can detect RESUME / NEW deterministically.
+# Encoding mirrors internal/worktree/has_session.go:EncodeProjectPath
+# (replaces '/' and '.' with '-'). Use the realpath of each worktree —
+# on macOS /tmp is a symlink to /private/tmp, and the picker uses the
+# resolved absolute path as the lookup key.
+rm -rf /tmp/ccw-demo-home
+PROJECTS=/tmp/ccw-demo-home/.claude/projects
+mkdir -p "$PROJECTS"
+for wt in feat-login feat-dashboard; do
+  abs=$(cd "/tmp/ccw-demo/.claude/worktrees/$wt" && pwd -P)
+  enc=$(printf '%s' "$abs" | tr '/.' '--')
+  mkdir -p "$PROJECTS/$enc"
+  printf '{}\n' >"$PROJECTS/$enc/dummy.jsonl"
+done
+
 echo "ready. now run: vhs docs/assets/picker-demo.tape"

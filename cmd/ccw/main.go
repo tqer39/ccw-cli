@@ -113,6 +113,14 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 		case picker.ActionResume:
 			return runResume(sel, passthrough)
 		case picker.ActionDelete:
+			if sel.IsPrunable {
+				if err := worktree.Prune(mainRepo); err != nil {
+					ui.Error("%v", err)
+					return 1
+				}
+				ui.Success("Pruned worktree admin files")
+				continue
+			}
 			if err := worktree.Remove(mainRepo, sel.Path, sel.ForceDelete); err != nil {
 				ui.Error("%v", err)
 				return 1
@@ -169,6 +177,14 @@ func applyBulkDelete(mainRepo string, bulk picker.BulkDeletion) int {
 		}
 		ui.Success("Removed %s", p)
 	}
+	if bulk.RunPrune {
+		if err := worktree.Prune(mainRepo); err != nil {
+			ui.Error("prune: %v", err)
+			errs++
+		} else {
+			ui.Success("Pruned worktree admin files")
+		}
+	}
 	if errs > 0 {
 		return 1
 	}
@@ -224,7 +240,12 @@ func runCleanAll(mainRepo string, flags cli.Flags, interactive bool) int {
 		Force: flags.Force,
 	}
 	for _, i := range targets {
-		bulk.Paths = append(bulk.Paths, infos[i].Path)
+		w := infos[i]
+		if w.Status == worktree.StatusPrunable {
+			bulk.RunPrune = true
+			continue
+		}
+		bulk.Paths = append(bulk.Paths, w.Path)
 	}
 	return applyBulkDelete(mainRepo, bulk)
 }

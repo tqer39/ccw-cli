@@ -10,7 +10,7 @@ Set TypingSpeed 110ms
 Set PlaybackSpeed 1.0
 
 Hide
-Type "cd /tmp/ccw-demo && export PATH=/tmp/ccw-demo-bin:/tmp/fake-gh:$PATH && clear"
+Type "cd /tmp/ccw-demo && export HOME=/tmp/ccw-demo-home PATH=/tmp/ccw-demo-bin:/tmp/fake-gh:$PATH && clear"
 Enter
 Sleep 1000ms
 Show

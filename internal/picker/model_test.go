@@ -18,6 +18,7 @@ func TestIcon(t *testing.T) {
 		{worktree.StatusPushed, "✅"},
 		{worktree.StatusLocalOnly, "⚠"},
 		{worktree.StatusDirty, "⛔"},
+		{worktree.StatusPrunable, "🧹"},
 		{worktree.Status(99), "•"},
 	}
 	for _, tc := range cases {
@@ -329,6 +330,87 @@ func TestDeleteConfirmView_HidesForceForClean(t *testing.T) {
 	out := m.View().Content
 	if strings.Contains(out, "--force") {
 		t.Errorf("deleteConfirmView should not show --force for clean worktree:\n%s", out)
+	}
+}
+
+func TestDeleteConfirm_Prunable_SetsIsPrunable(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/missing", Branch: "missing", Status: worktree.StatusPrunable},
+	})
+	m = goToDeleteConfirm(m)
+	next, _ := m.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
+	mm := next.(Model)
+	if mm.Action() != ActionDelete {
+		t.Errorf("Action = %s, want delete", mm.Action())
+	}
+	if !mm.Selection().IsPrunable {
+		t.Error("Selection.IsPrunable should be true for prunable row")
+	}
+	if mm.Selection().ForceDelete {
+		t.Error("ForceDelete should be false for prunable (no remove --force)")
+	}
+}
+
+func TestDeleteConfirmView_PrunableSinglePromptsPrune(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/missing", Branch: "missing", Status: worktree.StatusPrunable},
+	})
+	m = goToDeleteConfirm(m)
+	out := m.View().Content
+	if !strings.Contains(out, "git worktree prune") {
+		t.Errorf("prunable confirm view must mention git worktree prune:\n%s", out)
+	}
+	// only one prunable in the list -> short prompt, no enumeration
+	if strings.Contains(out, "following") || strings.Contains(out, "以下") {
+		t.Errorf("single-prunable view should not enumerate, got:\n%s", out)
+	}
+}
+
+func TestDeleteConfirmView_PrunableMultipleEnumerates(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/p1", Branch: "p1", Status: worktree.StatusPrunable},
+		{Path: "/a/.claude/worktrees/p2", Branch: "p2", Status: worktree.StatusPrunable},
+	})
+	m = goToDeleteConfirm(m)
+	out := m.View().Content
+	for _, want := range []string{"git worktree prune", "/a/.claude/worktrees/p1", "/a/.claude/worktrees/p2"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("multi-prunable confirm view missing %q:\n%s", want, out)
+		}
+	}
+}
+
+func TestUpdate_DeleteAll_WithPrunable_SetsRunPrune(t *testing.T) {
+	m := New([]worktree.Info{
+		{Branch: "a", Path: "/a", Status: worktree.StatusPushed},
+		{Branch: "p", Path: "/p", Status: worktree.StatusPrunable},
+	})
+	m.bulkTargets = []int{0, 1}
+	m.state = stateBulkConfirm
+	got, _ := m.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
+	mm := got.(Model)
+	if mm.Action() != ActionBulkDelete {
+		t.Errorf("Action = %s, want bulk-delete", mm.Action())
+	}
+	b := mm.Bulk()
+	if !b.RunPrune {
+		t.Error("RunPrune should be true when a prunable target is selected")
+	}
+	if len(b.Paths) != 1 || b.Paths[0] != "/a" {
+		t.Errorf("Paths = %v, want only /a (prunable excluded)", b.Paths)
+	}
+}
+
+func TestBulkConfirmView_ShowsPruneNote(t *testing.T) {
+	m := New([]worktree.Info{
+		{Branch: "a", Path: "/a", Status: worktree.StatusPushed},
+		{Branch: "p", Path: "/p", Status: worktree.StatusPrunable},
+	})
+	m.bulkTargets = []int{0, 1}
+	m.state = stateBulkConfirm
+	out := m.View().Content
+	if !strings.Contains(out, "git worktree prune") {
+		t.Errorf("bulkConfirmView with prunable target must mention git worktree prune:\n%s", out)
 	}
 }
 

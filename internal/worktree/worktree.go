@@ -19,6 +19,9 @@ const (
 	StatusLocalOnly
 	// StatusDirty means the working tree has untracked or modified files.
 	StatusDirty
+	// StatusPrunable means the working directory is gone but git still
+	// keeps admin files for it. Cleared by `git worktree prune`.
+	StatusPrunable
 )
 
 // String returns the short lowercase label used in picker UI.
@@ -30,6 +33,8 @@ func (s Status) String() string {
 		return "local-only"
 	case StatusDirty:
 		return "dirty"
+	case StatusPrunable:
+		return "prunable"
 	default:
 		return "unknown"
 	}
@@ -63,6 +68,14 @@ func List(mainRepo string) ([]Info, error) {
 		if !strings.Contains(e.Path, ccwPathMarker) {
 			continue
 		}
+		if e.Prunable {
+			result = append(result, Info{
+				Path:   e.Path,
+				Branch: e.Branch,
+				Status: StatusPrunable,
+			})
+			continue
+		}
 		st, err := Classify(e.Path)
 		if err != nil {
 			return nil, err
@@ -79,6 +92,15 @@ func List(mainRepo string) ([]Info, error) {
 		result = append(result, info)
 	}
 	return result, nil
+}
+
+// Prune cleans up admin files for prunable worktrees attached to mainRepo.
+// Wraps `git -C mainRepo worktree prune`.
+func Prune(mainRepo string) error {
+	if err := gitx.Prune(mainRepo); err != nil {
+		return fmt.Errorf("prune worktrees: %w", err)
+	}
+	return nil
 }
 
 // Classify inspects a worktree and returns pushed / local-only / dirty.
