@@ -1,9 +1,19 @@
 package tips
 
 import (
+	"os"
 	"strings"
 	"testing"
+
+	"github.com/tqer39/ccw-cli/internal/i18n"
 )
+
+func TestMain(m *testing.M) {
+	if err := i18n.Init("en"); err != nil {
+		panic(err)
+	}
+	os.Exit(m.Run())
+}
 
 func TestPickRandom_FromDefaultSet(t *testing.T) {
 	got := PickRandom(42)

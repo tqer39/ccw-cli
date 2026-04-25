@@ -123,6 +123,7 @@ Make sure `~/.local/bin` is on your `PATH`.
 |---|---|
 | `NO_COLOR=1` | Disable colored output |
 | `CCW_DEBUG=1` | Verbose debug logging |
+| `CCW_LANG=en\|ja` | Force output language. Overridden by `--lang`. Falls back to system locale (`LC_ALL` / `LC_MESSAGES` / `LANG`), then English. |
 
 Exit codes: `0` success · `1` user error / cancel · anything else is forwarded from `claude`.
 

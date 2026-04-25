@@ -123,6 +123,7 @@ go build -o ~/.local/bin/ccw ~/ccw-cli/cmd/ccw
 |---|---|
 | `NO_COLOR=1` | カラー出力を無効化 |
 | `CCW_DEBUG=1` | 詳細ログ出力 |
+| `CCW_LANG=en\|ja` | 出力言語を強制。`--lang` が優先される。未設定時はシステム locale (`LC_ALL` / `LC_MESSAGES` / `LANG`) を参照し、最終的に英語にフォールバック。 |
 
 終了コード: `0` 成功 · `1` ユーザーエラー / キャンセル · その他は `claude` の終了コードを透過。
 

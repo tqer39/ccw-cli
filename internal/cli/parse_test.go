@@ -152,3 +152,29 @@ func TestParse_Table(t *testing.T) {
 		})
 	}
 }
+
+func TestParse_LangFlag(t *testing.T) {
+	cases := []struct {
+		name    string
+		args    []string
+		want    string
+		wantErr bool
+	}{
+		{"default empty", []string{}, "", false},
+		{"--lang=en", []string{"--lang=en"}, "en", false},
+		{"--lang=ja", []string{"--lang=ja"}, "ja", false},
+		{"--lang ja", []string{"--lang", "ja"}, "ja", false},
+		{"--lang invalid still parses (Init validates)", []string{"--lang=fr"}, "fr", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := Parse(tc.args)
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("err = %v, wantErr = %v", err, tc.wantErr)
+			}
+			if got.Lang != tc.want {
+				t.Errorf("Lang = %q, want %q", got.Lang, tc.want)
+			}
+		})
+	}
+}
