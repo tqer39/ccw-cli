@@ -19,8 +19,8 @@ func EncodeProjectPath(absPath string) string {
 // missing, read failure) so callers can use it as a UI hint without
 // branching on errors.
 func HasSession(absPath string) bool {
-	home, err := os.UserHomeDir()
-	if err != nil || home == "" {
+	home := os.Getenv("HOME")
+	if home == "" {
 		return false
 	}
 	dir := filepath.Join(home, ".claude", "projects", EncodeProjectPath(absPath))
