@@ -32,7 +32,7 @@ func TestDefaultBranch_FallbackMain(t *testing.T) {
 
 func TestDefaultBranch_FallbackMaster(t *testing.T) {
 	dir := initRepo(t)
-	// main にコミットして実体を作ってから master に切り替えて削除する
+	// Materialize main with a commit, switch to master, then delete main.
 	mustRun(t, dir, "git", "commit", "--allow-empty", "-m", "init-main")
 	mustRun(t, dir, "git", "checkout", "-q", "-b", "master")
 	mustRun(t, dir, "git", "commit", "--allow-empty", "-m", "init")
@@ -48,7 +48,7 @@ func TestDefaultBranch_FallbackMaster(t *testing.T) {
 
 func TestDefaultBranch_NoBranches(t *testing.T) {
 	dir := initRepo(t)
-	// main にコミットして実体を作ってから feature に切り替えて削除する
+	// Materialize main with a commit, switch to feature, then delete main.
 	mustRun(t, dir, "git", "commit", "--allow-empty", "-m", "init-main")
 	mustRun(t, dir, "git", "checkout", "-q", "-b", "feature")
 	mustRun(t, dir, "git", "commit", "--allow-empty", "-m", "init")
