@@ -333,6 +333,53 @@ func TestDeleteConfirmView_HidesForceForClean(t *testing.T) {
 	}
 }
 
+func TestDeleteConfirm_Prunable_SetsIsPrunable(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/missing", Branch: "missing", Status: worktree.StatusPrunable},
+	})
+	m = goToDeleteConfirm(m)
+	next, _ := m.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
+	mm := next.(Model)
+	if mm.Action() != ActionDelete {
+		t.Errorf("Action = %s, want delete", mm.Action())
+	}
+	if !mm.Selection().IsPrunable {
+		t.Error("Selection.IsPrunable should be true for prunable row")
+	}
+	if mm.Selection().ForceDelete {
+		t.Error("ForceDelete should be false for prunable (no remove --force)")
+	}
+}
+
+func TestDeleteConfirmView_PrunableSinglePromptsPrune(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/missing", Branch: "missing", Status: worktree.StatusPrunable},
+	})
+	m = goToDeleteConfirm(m)
+	out := m.View().Content
+	if !strings.Contains(out, "git worktree prune") {
+		t.Errorf("prunable confirm view must mention git worktree prune:\n%s", out)
+	}
+	// only one prunable in the list -> short prompt, no enumeration
+	if strings.Contains(out, "following") || strings.Contains(out, "以下") {
+		t.Errorf("single-prunable view should not enumerate, got:\n%s", out)
+	}
+}
+
+func TestDeleteConfirmView_PrunableMultipleEnumerates(t *testing.T) {
+	m := New([]worktree.Info{
+		{Path: "/a/.claude/worktrees/p1", Branch: "p1", Status: worktree.StatusPrunable},
+		{Path: "/a/.claude/worktrees/p2", Branch: "p2", Status: worktree.StatusPrunable},
+	})
+	m = goToDeleteConfirm(m)
+	out := m.View().Content
+	for _, want := range []string{"git worktree prune", "/a/.claude/worktrees/p1", "/a/.claude/worktrees/p2"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("multi-prunable confirm view missing %q:\n%s", want, out)
+		}
+	}
+}
+
 func TestView_ListRendersItems(t *testing.T) {
 	m := New([]worktree.Info{
 		{Path: "/a/.claude/worktrees/feat-x", Branch: "feat-x", Status: worktree.StatusPushed},

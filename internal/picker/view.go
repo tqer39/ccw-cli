@@ -53,6 +53,9 @@ func (m Model) menuView() string {
 
 func (m Model) deleteConfirmView() string {
 	w := m.infos[m.selIdx]
+	if w.Status == worktree.StatusPrunable {
+		return m.prunableConfirmView()
+	}
 	cmd := fmt.Sprintf("git worktree remove %q", w.Path)
 	if w.Status == worktree.StatusDirty {
 		cmd = fmt.Sprintf("git worktree remove --force %q", w.Path)
@@ -61,6 +64,29 @@ func (m Model) deleteConfirmView() string {
 		"Delete worktree %s?\n  path:   %s\n  status: %s\n\nThis will run: %s\n\nConfirm? [y/N]\n",
 		w.Branch, w.Path, w.Status, cmd,
 	)
+}
+
+func (m Model) prunableConfirmView() string {
+	var prunables []worktree.Info
+	for _, in := range m.infos {
+		if in.Status == worktree.StatusPrunable {
+			prunables = append(prunables, in)
+		}
+	}
+	if len(prunables) <= 1 {
+		w := m.infos[m.selIdx]
+		return fmt.Sprintf(
+			"Prune worktree %s?\n  path:   %s\n\nThis will run: git worktree prune\n\nConfirm? [y/N]\n",
+			w.Branch, w.Path,
+		)
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "Prune %d prunable worktrees? (git worktree prune removes all of them at once)\n\n", len(prunables))
+	for _, p := range prunables {
+		fmt.Fprintf(&b, "  %s %s\n", p.Branch, p.Path)
+	}
+	b.WriteString("\nThis will run: git worktree prune\n\nConfirm? [y/N]\n")
+	return b.String()
 }
 
 func (m Model) bulkFilterView() string {
