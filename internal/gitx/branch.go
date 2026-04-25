@@ -26,3 +26,12 @@ func DefaultBranch(mainRepo string) (string, error) {
 	}
 	return "", fmt.Errorf("no default branch found (origin/HEAD, main, master all unset)")
 }
+
+// ShortHash returns the trimmed output of `git rev-parse --short=<length> <ref>`.
+func ShortHash(mainRepo, ref string, length int) (string, error) {
+	out, err := Output(mainRepo, "rev-parse", fmt.Sprintf("--short=%d", length), ref)
+	if err != nil {
+		return "", fmt.Errorf("short hash %s: %w", ref, err)
+	}
+	return strings.TrimSpace(out), nil
+}
