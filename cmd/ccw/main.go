@@ -11,6 +11,7 @@ import (
 	"github.com/tqer39/ccw-cli/internal/claude"
 	"github.com/tqer39/ccw-cli/internal/cli"
 	"github.com/tqer39/ccw-cli/internal/gitx"
+	"github.com/tqer39/ccw-cli/internal/namegen"
 	"github.com/tqer39/ccw-cli/internal/picker"
 	"github.com/tqer39/ccw-cli/internal/superpowers"
 	"github.com/tqer39/ccw-cli/internal/ui"
@@ -71,7 +72,8 @@ func run(flags cli.Flags) int {
 	}
 
 	if flags.NewWorktree {
-		code, err := claude.LaunchNew(mainRepo, preamble, flags.Passthrough)
+		name := namegen.Generate()
+		code, err := claude.LaunchNew(mainRepo, name, preamble, flags.Passthrough)
 		if err != nil {
 			ui.Error("%v", err)
 			return 1
@@ -93,19 +95,15 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 		case picker.ActionCancel:
 			return 0
 		case picker.ActionNew:
-			code, err := claude.LaunchNew(mainRepo, "", passthrough)
+			name := namegen.Generate()
+			code, err := claude.LaunchNew(mainRepo, name, "", passthrough)
 			if err != nil {
 				ui.Error("%v", err)
 				return 1
 			}
 			return code
 		case picker.ActionResume:
-			code, err := claude.Resume(sel.Path, passthrough)
-			if err != nil {
-				ui.Error("%v", err)
-				return 1
-			}
-			return code
+			return runResume(sel, passthrough)
 		case picker.ActionDelete:
 			if err := worktree.Remove(mainRepo, sel.Path, sel.ForceDelete); err != nil {
 				ui.Error("%v", err)
@@ -118,6 +116,39 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 			}
 		}
 	}
+}
+
+// runResume launches `claude --continue` when the worktree has a session log,
+// or `claude -n <name>` for fresh starts. The fresh-start path uses
+// LaunchInWorktree because cwd is already an existing worktree (passing
+// `--worktree <name>` from inside one risks a name-collision against git's
+// existing registration). The post-Continue fallback only fires when the
+// session log has actually disappeared between the picker check and Continue
+// returning — so a normal user quit or transient claude error surfaces its
+// exit code instead of silently restarting a fresh conversation.
+func runResume(sel picker.Selection, passthrough []string) int {
+	if !sel.HasSession {
+		return launchInPlace(sel.Path, passthrough)
+	}
+	code, err := claude.Continue(sel.Path, passthrough)
+	if err != nil {
+		ui.Error("%v", err)
+		return 1
+	}
+	if code != 0 && !worktree.HasSession(sel.Path) {
+		return launchInPlace(sel.Path, passthrough)
+	}
+	return code
+}
+
+func launchInPlace(path string, passthrough []string) int {
+	name := worktreeName(path)
+	code, err := claude.LaunchInWorktree(path, name, "", passthrough)
+	if err != nil {
+		ui.Error("%v", err)
+		return 1
+	}
+	return code
 }
 
 func applyBulkDelete(mainRepo string, bulk picker.BulkDeletion) int {
@@ -235,6 +266,15 @@ func resolveMainRepo() (string, error) {
 		return "", fmt.Errorf("resolve main repo: %w", err)
 	}
 	return mainRepo, nil
+}
+
+func worktreeName(path string) string {
+	for i := len(path) - 1; i >= 0; i-- {
+		if path[i] == '/' {
+			return path[i+1:]
+		}
+	}
+	return path
 }
 
 func maybeSuperpowers(enabled bool, interactive, assumeYes bool) (string, error) {

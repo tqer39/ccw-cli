@@ -4,10 +4,12 @@ package picker
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tqer39/ccw-cli/internal/gh"
+	"github.com/tqer39/ccw-cli/internal/tips"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
@@ -45,6 +47,7 @@ type Selection struct {
 	Path        string
 	Branch      string
 	Status      worktree.Status
+	HasSession  bool
 	ForceDelete bool
 }
 
@@ -96,6 +99,7 @@ type Model struct {
 	bulkFilter    map[worktree.Status]bool
 	bulkTargets   []int
 	bulkForce     bool
+	tip           string
 }
 
 // listItem is a bubbles/list.Item with a tag that lets us distinguish
@@ -160,7 +164,7 @@ func New(infos []worktree.Info) Model {
 	l.SetFilteringEnabled(false)
 	// Probe gh availability once at construction. View() runs on every render,
 	// so caching here avoids spawning `gh auth status` per keystroke.
-	return Model{state: stateList, infos: infos, list: l, ghAvailable: gh.Available()}
+	return Model{state: stateList, infos: infos, list: l, ghAvailable: gh.Available(), tip: tips.PickRandom(uint64(time.Now().UnixNano()))}
 }
 
 // Action returns the action the user chose (valid after the program exits).

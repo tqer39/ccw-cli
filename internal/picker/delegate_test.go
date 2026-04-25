@@ -8,126 +8,138 @@ import (
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
-func TestRenderRow_PushedNoColor(t *testing.T) {
+func TestRenderRow_ResumeBadge(t *testing.T) {
 	t.Setenv("NO_COLOR", "1")
-	row := renderRow(listItem{
+	li := listItem{
 		tag: tagWorktree,
 		wt: &worktree.Info{
-			Branch:      "kahan",
-			Path:        "/tmp/x",
-			Status:      worktree.StatusPushed,
-			AheadCount:  0,
-			BehindCount: 0,
+			Path:       "/repo/.claude/worktrees/foo",
+			Branch:     "feature/auth",
+			Status:     worktree.StatusPushed,
+			HasSession: true,
 		},
-		pr: &gh.PRInfo{Number: 12, State: "MERGED", Title: "Add picker mod"},
-	}, 120, false, false)
-	if !strings.Contains(row, "[pushed]") {
-		t.Errorf("want [pushed] badge, got:\n%s", row)
 	}
-	if !strings.Contains(row, "kahan") || !strings.Contains(row, "↑0 ↓0") {
-		t.Errorf("missing branch/counts:\n%s", row)
+	got := renderRow(li, 120, true, false)
+	if !strings.Contains(got, "[RESUME]") {
+		t.Errorf("missing RESUME badge:\n%s", got)
 	}
-	if !strings.Contains(row, "#12") || !strings.Contains(row, "[merged]") {
-		t.Errorf("missing PR badge/number:\n%s", row)
+	if !strings.Contains(got, "foo") {
+		t.Errorf("missing worktree name foo:\n%s", got)
+	}
+	if !strings.Contains(got, "branch:  feature/auth") {
+		t.Errorf("missing branch line:\n%s", got)
+	}
+	if !strings.Contains(got, "path:    /repo/.claude/worktrees/foo") {
+		t.Errorf("missing path line:\n%s", got)
+	}
+	lines := strings.Split(strings.TrimRight(got, "\n"), "\n")
+	if len(lines) != 4 {
+		t.Errorf("got %d lines, want 4:\n%s", len(lines), got)
 	}
 }
 
-func TestRenderRow_ContainsArrowAndPRBadge(t *testing.T) {
+func TestRenderRow_NewBadge(t *testing.T) {
 	t.Setenv("NO_COLOR", "1")
-	row := renderRow(listItem{
+	li := listItem{
 		tag: tagWorktree,
 		wt: &worktree.Info{
+			Path:       "/repo/.claude/worktrees/bar",
+			Branch:     "bar",
+			Status:     worktree.StatusLocalOnly,
+			HasSession: false,
+		},
+	}
+	got := renderRow(li, 120, true, true)
+	if !strings.Contains(got, "[NEW]") {
+		t.Errorf("missing NEW badge:\n%s", got)
+	}
+	if !strings.HasPrefix(got, "> ") {
+		t.Errorf("selected row should start with '> ': %q", got[:2])
+	}
+}
+
+func TestRenderRow_StatusBadgeAndIndicators(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	li := listItem{
+		tag: tagWorktree,
+		wt: &worktree.Info{
+			Path:        "/repo/.claude/worktrees/dirty",
+			Branch:      "wip",
+			Status:      worktree.StatusDirty,
+			AheadCount:  2,
+			BehindCount: 1,
+			DirtyCount:  5,
+		},
+	}
+	got := renderRow(li, 120, true, false)
+	if !strings.Contains(got, "[dirty]") {
+		t.Errorf("missing [dirty]:\n%s", got)
+	}
+	if !strings.Contains(got, "↑2 ↓1 ✎5") {
+		t.Errorf("missing indicators:\n%s", got)
+	}
+}
+
+func TestRenderRow_PRLineWithPR(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	li := listItem{
+		tag: tagWorktree,
+		wt: &worktree.Info{
+			Path:   "/repo/.claude/worktrees/foo",
 			Branch: "feat/login",
-			Path:   "/tmp/x",
 			Status: worktree.StatusPushed,
 		},
 		pr: &gh.PRInfo{Number: 42, State: "OPEN", Title: "add login page"},
-	}, 120, false, false)
-	if !strings.Contains(row, "->") {
-		t.Errorf("want arrow separator `->` in NO_COLOR mode, got:\n%s", row)
 	}
-	if !strings.Contains(row, "[open]") {
-		t.Errorf("want PR state badge [open], got:\n%s", row)
+	got := renderRow(li, 120, false, false)
+	if !strings.Contains(got, "pr:      ") {
+		t.Errorf("missing pr: label:\n%s", got)
 	}
-	if !strings.Contains(row, "#42") || !strings.Contains(row, "add login page") {
-		t.Errorf("want PR number + title, got:\n%s", row)
+	if !strings.Contains(got, "[open]") {
+		t.Errorf("missing [open] PR badge:\n%s", got)
 	}
-	if strings.Count(row, "open") != 1 {
-		t.Errorf("state label should appear exactly once, got:\n%s", row)
+	if !strings.Contains(got, "#42") {
+		t.Errorf("missing #42:\n%s", got)
 	}
 }
 
-func TestRenderRow_ArrowOmittedWhenPRUnavailable(t *testing.T) {
+func TestRenderRow_PRLineNoPR(t *testing.T) {
 	t.Setenv("NO_COLOR", "1")
-	row := renderRow(listItem{
+	li := listItem{
 		tag: tagWorktree,
 		wt: &worktree.Info{
-			Branch: "nebula",
-			Path:   "/tmp/n",
+			Path:   "/repo/.claude/worktrees/lonely",
+			Branch: "lonely",
+			Status: worktree.StatusLocalOnly,
+		},
+		pr: nil,
+	}
+	got := renderRow(li, 120, false, false)
+	if !strings.Contains(got, "(no PR)") {
+		t.Errorf("missing (no PR) placeholder:\n%s", got)
+	}
+}
+
+func TestRenderRow_PRUnavailableHidesPRContent(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	li := listItem{
+		tag: tagWorktree,
+		wt: &worktree.Info{
+			Path:   "/repo/.claude/worktrees/n",
+			Branch: "n",
 			Status: worktree.StatusDirty,
 		},
 		pr: nil,
-	}, 120, true, false)
-	if strings.Contains(row, "->") {
-		t.Errorf("arrow should be omitted when prUnavailable, got:\n%s", row)
 	}
-}
-
-func TestRenderRow_ArrowWithNoPRPlaceholder(t *testing.T) {
-	t.Setenv("NO_COLOR", "1")
-	row := renderRow(listItem{
-		tag: tagWorktree,
-		wt: &worktree.Info{
-			Branch: "lonely",
-			Path:   "/tmp/l",
-			Status: worktree.StatusLocalOnly,
-		},
-		pr: nil,
-	}, 120, false, false)
-	if !strings.Contains(row, "->") {
-		t.Errorf("arrow should appear even when PR is absent, got:\n%s", row)
+	got := renderRow(li, 120, true, false)
+	if strings.Contains(got, "(no PR)") {
+		t.Errorf("PR placeholder should not appear when prUnavailable:\n%s", got)
 	}
-	if !strings.Contains(row, "(no PR)") {
-		t.Errorf("want (no PR) placeholder, got:\n%s", row)
+	if strings.Contains(got, "#") {
+		t.Errorf("PR number should not appear when prUnavailable:\n%s", got)
 	}
-}
-
-func TestRenderRow_DirtyPRUnavailable(t *testing.T) {
-	t.Setenv("NO_COLOR", "1")
-	row := renderRow(listItem{
-		tag: tagWorktree,
-		wt: &worktree.Info{
-			Branch:     "nebula",
-			Path:       "/tmp/n",
-			Status:     worktree.StatusDirty,
-			AheadCount: 1,
-			DirtyCount: 5,
-		},
-		pr: nil,
-	}, 120, true, false)
-	if !strings.Contains(row, "[dirty]") {
-		t.Errorf("want [dirty]:\n%s", row)
-	}
-	if !strings.Contains(row, "✎5") {
-		t.Errorf("want ✎5:\n%s", row)
-	}
-	if strings.Contains(row, "#") || strings.Contains(row, "no PR") {
-		t.Errorf("PR column should be omitted when prUnavailable:\n%s", row)
-	}
-}
-
-func TestRenderRow_NoPRShowsPlaceholder(t *testing.T) {
-	t.Setenv("NO_COLOR", "1")
-	row := renderRow(listItem{
-		tag: tagWorktree,
-		wt: &worktree.Info{
-			Branch: "lonely",
-			Path:   "/tmp/l",
-			Status: worktree.StatusLocalOnly,
-		},
-		pr: nil,
-	}, 120, false, false)
-	if !strings.Contains(row, "(no PR)") {
-		t.Errorf("want (no PR) marker when PR col enabled but empty:\n%s", row)
+	// pr line still appears as label, but the cell is empty
+	if !strings.Contains(got, "pr:") {
+		t.Errorf("pr: label should still appear:\n%s", got)
 	}
 }

@@ -68,7 +68,7 @@ func runFallback(infos []worktree.Info, in io.Reader, out io.Writer) (Action, Se
 		return ActionCancel, Selection{}, fmt.Errorf("invalid choice: %q", answer)
 	}
 	w := infos[n-1]
-	return ActionResume, Selection{Path: w.Path, Branch: w.Branch, Status: w.Status}, nil
+	return ActionResume, Selection{Path: w.Path, Branch: w.Branch, Status: w.Status, HasSession: w.HasSession}, nil
 }
 
 // fallbackIndicators formats ahead/behind commit counts and dirty file count

@@ -101,3 +101,26 @@ func prCellBackground(state string) (string, bool) {
 	}
 	return "", false
 }
+
+// ResumeBadge renders a RESUME / NEW badge. Under NO_COLOR returns
+// "[RESUME]" / "[NEW]   " (padded to equal width).
+func ResumeBadge(hasSession bool) string {
+	if noColor() {
+		if hasSession {
+			return "[RESUME]"
+		}
+		return "[NEW]   "
+	}
+	if hasSession {
+		return lipgloss.NewStyle().
+			Padding(0, 1).Bold(true).
+			Background(lipgloss.Color("14")).
+			Foreground(lipgloss.Color("0")).
+			Render("💬 RESUME")
+	}
+	return lipgloss.NewStyle().
+		Padding(0, 1).
+		Background(lipgloss.Color("240")).
+		Foreground(lipgloss.Color("15")).
+		Render("⚡ NEW   ")
+}

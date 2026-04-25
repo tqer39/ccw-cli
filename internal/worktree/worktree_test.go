@@ -147,3 +147,43 @@ func TestRemove_Integration(t *testing.T) {
 func writeFile(path, body string) error {
 	return os.WriteFile(path, []byte(body), 0o644)
 }
+
+func TestList_PopulatesHasSession(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	main := initMainRepo(t)
+	wt := addWorktree(t, main, "alpha")
+
+	// Resolve symlinks so the path matches what gitx.ListRaw returns
+	// (on macOS, /var/folders/... resolves to /private/var/folders/...).
+	wtResolved, err := filepath.EvalSymlinks(wt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dir := filepath.Join(home, ".claude", "projects", EncodeProjectPath(wtResolved))
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "x.jsonl"), []byte("{}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	infos, err := List(main)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, in := range infos {
+		if in.Path == wtResolved {
+			if !in.HasSession {
+				t.Errorf("Info.HasSession = false, want true for %s", wtResolved)
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("worktree %s not in List() output", wtResolved)
+	}
+}

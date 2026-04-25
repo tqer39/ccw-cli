@@ -72,12 +72,26 @@ PR state badge (shown only when [`gh`](https://cli.github.com/) is installed and
 | 🟪 `[MERGED]` | PR has been merged |
 | 🟥 `[CLOSED]` | PR was closed without merging |
 
-Selecting a worktree opens `[r] run` / `[d] delete` / `[b] back`. `run` launches a fresh `claude --permission-mode auto` in that worktree — ccw does **not** reuse Claude Code session IDs (no `--resume` under the hood). Bulk shortcuts (`[delete all]`, `[clean pushed]`, `[custom select]`) remove many at once; dirty items require either `--force` or a three-choice confirm (`y` force · `s` skip dirty · `N` cancel).
+Session badge:
+
+| Badge | Meaning |
+|---|---|
+| 💬 `RESUME` | Past session log exists — `run` restores the conversation |
+| ⚡ `NEW`    | No session log — `run` starts fresh |
+
+Selecting a worktree opens `[r] run` / `[d] delete` / `[b] back`. `run` calls `claude --continue` to restore the past conversation when a session log exists, or `claude -n <worktree>` to start fresh otherwise. Bulk shortcuts (`[delete all]`, `[clean pushed]`, `[custom select]`) remove many at once; dirty items require either `--force` or a three-choice confirm (`y` force · `s` skip dirty · `N` cancel).
 
 Without `gh`, the picker stays functional and shows a hint; rate-limit / network failures hide the PR column silently.
 
-> ⚠️ **Passing `--resume` through `--` is unsupported.**
-> `ccw -n -- --resume ID` and `ccw -s -- --resume ID` combine `claude --worktree` (new worktree) with `--resume` (continue a prior session); the resumed transcript's file references won't match the freshly-created worktree. Even the picker's re-entry path suffers the same mismatch if the selected worktree differs from the session's original. If a resumed session is what you want, run `claude --resume ID` directly — bypass ccw.
+### Naming convention
+
+When ccw creates a new worktree, the worktree directory and the Claude Code session name are kept 1:1:
+
+- Directory: `<repo>/.claude/worktrees/<name>/`
+- Branch: `worktree-<name>`
+- Session name: `<name>` (set via `claude -n <name>`)
+
+`<name>` is generated like `quick-falcon-7bd2`. Renaming the session manually with `/rename` is fine — ccw does not track it, and `--continue` keys off the working directory so conversation restore is unaffected.
 
 ## 📦 Installation
 
@@ -99,7 +113,7 @@ Make sure `~/.local/bin` is on your `PATH`.
 ### Requirements
 
 - [`git`](https://git-scm.com/)
-- [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.49` — the `--worktree` flag that ccw relies on was introduced in 2.1.49 (2026-02-19). ccw offers to install `claude` via npm / brew if missing.
+- [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.76` — ccw uses `--worktree <name>` (added in 2.1.49) together with `-n <name>` (added in 2.1.76). ccw offers to install `claude` via npm / brew if missing.
 - *(optional)* [`gh`](https://cli.github.com/) — enables PR info in the picker
 - *(optional)* [superpowers](https://github.com/obra/superpowers) plugin — auto-checked when `-s` is used
 

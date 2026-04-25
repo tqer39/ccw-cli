@@ -1,5 +1,5 @@
 // Package claude wraps launching the `claude` CLI in ccw-appropriate ways
-// (new worktree session vs. resume existing worktree).
+// (new worktree session vs. continue existing worktree).
 package claude
 
 import (
@@ -10,10 +10,10 @@ import (
 )
 
 // BuildNewArgs constructs argv (excluding the program name) for
-// `claude --permission-mode auto --worktree [extra...] [-- preamble]`.
-func BuildNewArgs(preamble string, extra []string) []string {
-	args := make([]string, 0, 3+len(extra)+2)
-	args = append(args, "--permission-mode", "auto", "--worktree")
+// `claude --permission-mode auto --worktree <name> -n <name> [extra...] [-- preamble]`.
+func BuildNewArgs(name, preamble string, extra []string) []string {
+	args := make([]string, 0, 6+len(extra)+2)
+	args = append(args, "--permission-mode", "auto", "--worktree", name, "-n", name)
 	args = append(args, extra...)
 	if preamble != "" {
 		args = append(args, "--", preamble)
@@ -21,22 +21,40 @@ func BuildNewArgs(preamble string, extra []string) []string {
 	return args
 }
 
-// BuildResumeArgs constructs argv for `claude --permission-mode auto [extra...]`.
-func BuildResumeArgs(extra []string) []string {
-	args := make([]string, 0, 2+len(extra))
-	args = append(args, "--permission-mode", "auto")
+// BuildInWorktreeArgs is BuildNewArgs without `--worktree`. Use when cwd is
+// already an existing worktree, since passing `--worktree <name>` from inside
+// a worktree risks a name-collision error against the existing git registration.
+func BuildInWorktreeArgs(name, preamble string, extra []string) []string {
+	args := make([]string, 0, 4+len(extra)+2)
+	args = append(args, "--permission-mode", "auto", "-n", name)
+	args = append(args, extra...)
+	if preamble != "" {
+		args = append(args, "--", preamble)
+	}
+	return args
+}
+
+// BuildContinueArgs constructs argv for `claude --permission-mode auto --continue [extra...]`.
+func BuildContinueArgs(extra []string) []string {
+	args := make([]string, 0, 3+len(extra))
+	args = append(args, "--permission-mode", "auto", "--continue")
 	return append(args, extra...)
 }
 
 // LaunchNew execs claude with BuildNewArgs in cwd. Returns claude's exit code
 // (0 on success, the child exit code on non-zero exit, -1 on exec error).
-func LaunchNew(cwd, preamble string, extra []string) (int, error) {
-	return runClaude(cwd, BuildNewArgs(preamble, extra))
+func LaunchNew(cwd, name, preamble string, extra []string) (int, error) {
+	return runClaude(cwd, BuildNewArgs(name, preamble, extra))
 }
 
-// Resume execs claude with BuildResumeArgs in cwd.
-func Resume(cwd string, extra []string) (int, error) {
-	return runClaude(cwd, BuildResumeArgs(extra))
+// LaunchInWorktree execs claude with BuildInWorktreeArgs in cwd (no `--worktree`).
+func LaunchInWorktree(cwd, name, preamble string, extra []string) (int, error) {
+	return runClaude(cwd, BuildInWorktreeArgs(name, preamble, extra))
+}
+
+// Continue execs claude with BuildContinueArgs in cwd.
+func Continue(cwd string, extra []string) (int, error) {
+	return runClaude(cwd, BuildContinueArgs(extra))
 }
 
 func runClaude(cwd string, args []string) (int, error) {

@@ -39,6 +39,7 @@ func (s Status) String() string {
 // quantitative indicators (ahead/behind commits, dirty file count).
 // AheadCount/BehindCount are meaningful for StatusPushed and StatusLocalOnly.
 // DirtyCount is meaningful only when Status == StatusDirty.
+// HasSession indicates whether a Claude Code session exists for this worktree.
 type Info struct {
 	Path        string
 	Branch      string
@@ -46,6 +47,7 @@ type Info struct {
 	AheadCount  int
 	BehindCount int
 	DirtyCount  int
+	HasSession  bool
 }
 
 const ccwPathMarker = "/.claude/worktrees/"
@@ -73,6 +75,7 @@ func List(mainRepo string) ([]Info, error) {
 			n, _ := gitx.DirtyCount(e.Path)
 			info.DirtyCount = n
 		}
+		info.HasSession = HasSession(e.Path)
 		result = append(result, info)
 	}
 	return result, nil
