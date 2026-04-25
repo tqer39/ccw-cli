@@ -7,10 +7,14 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/tqer39/ccw-cli/internal/claude"
 	"github.com/tqer39/ccw-cli/internal/cli"
+	"github.com/tqer39/ccw-cli/internal/gh"
 	"github.com/tqer39/ccw-cli/internal/gitx"
+	"github.com/tqer39/ccw-cli/internal/listmode"
 	"github.com/tqer39/ccw-cli/internal/namegen"
 	"github.com/tqer39/ccw-cli/internal/picker"
 	"github.com/tqer39/ccw-cli/internal/superpowers"
@@ -41,6 +45,10 @@ func main() {
 }
 
 func run(flags cli.Flags) int {
+	if flags.List {
+		return runList(flags)
+	}
+
 	mainRepo, err := resolveMainRepo()
 	if err != nil {
 		return 1
@@ -304,6 +312,78 @@ func worktreeName(path string) string {
 		}
 	}
 	return path
+}
+
+func runList(flags cli.Flags) int {
+	startDir := flags.TargetDir
+	if startDir == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			ui.Error("getwd: %v", err)
+			return 1
+		}
+		startDir = cwd
+	}
+
+	if err := gitx.RequireRepo(startDir); err != nil {
+		ui.Error("ccw -L: not a git repository: %s", startDir)
+		return 1
+	}
+	mainRepo, err := gitx.ResolveMainRepo(startDir)
+	if err != nil {
+		ui.Error("ccw -L: resolve main repo: %v", err)
+		return 2
+	}
+
+	b := listmode.Builder{
+		ListWorktrees: worktree.List,
+		ResolveRepo:   resolveListRepo,
+		FetchPRs: func(branches []string) (map[string]gh.PRInfo, error) {
+			return gh.PRStatusWithTimeout(gh.DefaultRunner{}, 5*time.Second, branches)
+		},
+		GhAvailable: gh.Available,
+	}
+
+	out, warns, err := b.Build(mainRepo, listmode.Options{NoPR: flags.NoPR, NoSession: flags.NoSession})
+	if err != nil {
+		ui.Error("ccw -L: %v", err)
+		return 2
+	}
+	for _, w := range warns {
+		ui.Warn("%s", w.Message)
+	}
+	if flags.JSON {
+		if err := listmode.RenderJSON(out, os.Stdout); err != nil {
+			ui.Error("render json: %v", err)
+			return 2
+		}
+		return 0
+	}
+	if err := listmode.RenderText(out, os.Stdout); err != nil {
+		ui.Error("render text: %v", err)
+		return 2
+	}
+	return 0
+}
+
+func resolveListRepo(mainRepo string) (listmode.RepoInfo, error) {
+	repo := listmode.RepoInfo{MainPath: mainRepo}
+	if rawURL, err := gitx.OriginURL(mainRepo); err == nil && rawURL != "" {
+		if owner, name, err := gitx.ParseOriginURL(rawURL); err == nil {
+			repo.Owner = owner
+			repo.Name = name
+		}
+	}
+	if repo.Owner == "" {
+		repo.Owner = "local"
+	}
+	if repo.Name == "" {
+		repo.Name = filepath.Base(mainRepo)
+	}
+	if db, err := gitx.DefaultBranch(mainRepo); err == nil {
+		repo.DefaultBranch = db
+	}
+	return repo, nil
 }
 
 func maybeSuperpowers(enabled bool, interactive, assumeYes bool) (string, error) {
