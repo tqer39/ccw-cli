@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/tqer39/ccw-cli/internal/gh"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
@@ -52,7 +52,7 @@ func TestUpdate_DeleteAll_NoDirty(t *testing.T) {
 	})
 	m.bulkTargets = []int{0, 1}
 	m.state = stateBulkConfirm
-	got, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	got, _ := m.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
 	mm := got.(Model)
 	if mm.Action() != ActionBulkDelete {
 		t.Errorf("want ActionBulkDelete, got %v", mm.Action())
@@ -73,7 +73,7 @@ func TestUpdate_DeleteAll_WithDirty_Force(t *testing.T) {
 	})
 	m.bulkTargets = []int{0, 1}
 	m.state = stateBulkConfirm
-	got, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	got, _ := m.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
 	mm := got.(Model)
 	if !mm.bulkForce {
 		t.Error("force should be true when dirty is included")
@@ -87,7 +87,7 @@ func TestUpdate_DeleteAll_SkipDirty(t *testing.T) {
 	})
 	m.bulkTargets = []int{0, 1}
 	m.state = stateBulkConfirm
-	got, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}})
+	got, _ := m.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
 	mm := got.(Model)
 	if mm.Action() != ActionBulkDelete {
 		t.Errorf("want ActionBulkDelete, got %v", mm.Action())
@@ -106,13 +106,13 @@ func TestUpdate_BulkFilter_TogglesAndConfirms(t *testing.T) {
 	m.state = stateBulkFilter
 	m.bulkFilter = map[worktree.Status]bool{}
 	// toggle dirty
-	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	next, _ := m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	m = next.(Model)
 	if !m.bulkFilter[worktree.StatusDirty] {
 		t.Error("dirty should be toggled on")
 	}
 	// enter -> bulk confirm with 1 target
-	next, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	next, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = next.(Model)
 	if m.state != stateBulkConfirm {
 		t.Errorf("state = %d, want stateBulkConfirm", m.state)
@@ -130,10 +130,10 @@ func TestUpdateList_EnterOnNewQuits(t *testing.T) {
 	m = next.(Model)
 	// index 0: worktree, 1: delete-all, 2: clean-pushed, 3: custom-select, 4: new, 5: quit
 	for i := 0; i < 4; i++ {
-		next, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+		next, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 		m = next.(Model)
 	}
-	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	next, cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = next.(Model)
 	if m.Action() != ActionNew {
 		t.Errorf("Action = %s, want new", m.Action())
@@ -174,7 +174,7 @@ func TestUpdateList_QKeyCancels(t *testing.T) {
 	m := New(nil)
 	next, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	m = next.(Model)
-	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	next, cmd := m.Update(tea.KeyPressMsg{Code: 'q', Text: "q"})
 	m = next.(Model)
 	if m.Action() != ActionCancel {
 		t.Errorf("Action = %s, want cancel", m.Action())
@@ -190,7 +190,7 @@ func TestUpdateList_EnterOnWorktreeEntersMenu(t *testing.T) {
 	})
 	next, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	m = next.(Model)
-	next, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	next, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = next.(Model)
 	if m.state != stateMenu {
 		t.Errorf("state = %d, want stateMenu", m.state)
@@ -203,7 +203,7 @@ func TestUpdateList_EnterOnWorktreeEntersMenu(t *testing.T) {
 func selectFirstWorktree(m Model) Model {
 	next, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	m = next.(Model)
-	next, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	next, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	return next.(Model)
 }
 
@@ -212,7 +212,7 @@ func TestMenu_ResumeEmitsQuit(t *testing.T) {
 		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusPushed},
 	})
 	m = selectFirstWorktree(m)
-	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	next, cmd := m.Update(tea.KeyPressMsg{Code: 'r', Text: "r"})
 	m = next.(Model)
 	if m.Action() != ActionResume {
 		t.Errorf("Action = %s, want resume", m.Action())
@@ -230,7 +230,7 @@ func TestMenu_BackReturnsToList(t *testing.T) {
 		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusPushed},
 	})
 	m = selectFirstWorktree(m)
-	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'b'}})
+	next, _ := m.Update(tea.KeyPressMsg{Code: 'b', Text: "b"})
 	m = next.(Model)
 	if m.state != stateList {
 		t.Errorf("state = %d, want stateList after back", m.state)
@@ -242,7 +242,7 @@ func TestMenu_DeleteEntersConfirm(t *testing.T) {
 		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusDirty},
 	})
 	m = selectFirstWorktree(m)
-	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	next, _ := m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	m = next.(Model)
 	if m.state != stateDeleteConfirm {
 		t.Errorf("state = %d, want stateDeleteConfirm", m.state)
@@ -254,7 +254,7 @@ func TestMenuView_ContainsSelectionSummary(t *testing.T) {
 		{Path: "/a/.claude/worktrees/feat-y", Branch: "feat-y", Status: worktree.StatusLocalOnly},
 	})
 	m = selectFirstWorktree(m)
-	out := m.View()
+	out := m.View().Content
 	for _, want := range []string{"feat-y", "local-only", "[r]", "[d]", "[b]"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("menuView missing %q:\n%s", want, out)
@@ -264,7 +264,7 @@ func TestMenuView_ContainsSelectionSummary(t *testing.T) {
 
 func goToDeleteConfirm(m Model) Model {
 	m = selectFirstWorktree(m)
-	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	next, _ := m.Update(tea.KeyPressMsg{Code: 'd', Text: "d"})
 	return next.(Model)
 }
 
@@ -273,7 +273,7 @@ func TestDeleteConfirm_YesOnCleanConfirmsWithoutForce(t *testing.T) {
 		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusPushed},
 	})
 	m = goToDeleteConfirm(m)
-	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	next, cmd := m.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
 	m = next.(Model)
 	if m.Action() != ActionDelete {
 		t.Errorf("Action = %s, want delete", m.Action())
@@ -291,7 +291,7 @@ func TestDeleteConfirm_YesOnDirtyForces(t *testing.T) {
 		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusDirty},
 	})
 	m = goToDeleteConfirm(m)
-	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	next, _ := m.Update(tea.KeyPressMsg{Code: 'y', Text: "y"})
 	m = next.(Model)
 	if !m.Selection().ForceDelete {
 		t.Error("ForceDelete should be true for dirty worktree")
@@ -303,7 +303,7 @@ func TestDeleteConfirm_NoReturnsToList(t *testing.T) {
 		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusPushed},
 	})
 	m = goToDeleteConfirm(m)
-	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	next, _ := m.Update(tea.KeyPressMsg{Code: 'n', Text: "n"})
 	m = next.(Model)
 	if m.state != stateList {
 		t.Errorf("state = %d, want stateList after n", m.state)
@@ -315,7 +315,7 @@ func TestDeleteConfirmView_ShowsForceForDirty(t *testing.T) {
 		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusDirty},
 	})
 	m = goToDeleteConfirm(m)
-	out := m.View()
+	out := m.View().Content
 	if !strings.Contains(out, "--force") {
 		t.Errorf("deleteConfirmView missing --force marker for dirty:\n%s", out)
 	}
@@ -326,7 +326,7 @@ func TestDeleteConfirmView_HidesForceForClean(t *testing.T) {
 		{Path: "/a/.claude/worktrees/x", Branch: "x", Status: worktree.StatusPushed},
 	})
 	m = goToDeleteConfirm(m)
-	out := m.View()
+	out := m.View().Content
 	if strings.Contains(out, "--force") {
 		t.Errorf("deleteConfirmView should not show --force for clean worktree:\n%s", out)
 	}
@@ -338,7 +338,7 @@ func TestView_ListRendersItems(t *testing.T) {
 	})
 	next, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
 	m = next.(Model)
-	out := m.View()
+	out := m.View().Content
 	if !strings.Contains(out, "feat-x") {
 		t.Errorf("View() missing branch name:\n%s", out)
 	}

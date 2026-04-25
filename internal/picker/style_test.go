@@ -3,9 +3,6 @@ package picker
 import (
 	"strings"
 	"testing"
-
-	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
 
 func TestPRBadge_NoColorLowercase(t *testing.T) {
@@ -26,11 +23,9 @@ func TestPRBadge_NoColorLowercase(t *testing.T) {
 
 func TestPRBadge_ColoredContainsLabel(t *testing.T) {
 	t.Setenv("NO_COLOR", "")
-	// Force a color profile; go test has no TTY so lipgloss would otherwise
-	// strip ANSI codes and the test couldn't distinguish colored output.
-	prev := lipgloss.ColorProfile()
-	lipgloss.SetColorProfile(termenv.ANSI256)
-	t.Cleanup(func() { lipgloss.SetColorProfile(prev) })
+	// lipgloss v2 の Style.Render は検出したプロファイルに依存せず
+	// 常に ANSI エスケープを返す（プロファイル側のフィルタは Writer 層で行われる）。
+	// そのためここで profile を強制設定する必要はない。
 
 	for _, state := range []string{"OPEN", "DRAFT", "MERGED", "CLOSED"} {
 		got := PRBadge(state)
