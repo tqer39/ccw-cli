@@ -118,7 +118,7 @@ func (m Model) updateMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m Model) currentSelection() Selection {
 	w := m.infos[m.selIdx]
-	return Selection{Path: w.Path, Branch: w.Branch, Status: w.Status}
+	return Selection{Path: w.Path, Branch: w.Branch, Status: w.Status, HasSession: w.HasSession}
 }
 
 func (m Model) updateBulkFilter(msg tea.KeyMsg) (tea.Model, tea.Cmd) {

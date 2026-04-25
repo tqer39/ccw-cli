@@ -23,8 +23,9 @@ func TestPickRandom_FromDefaultSet(t *testing.T) {
 }
 
 func TestPickRandom_Deterministic(t *testing.T) {
-	if PickRandom(7) != PickRandom(7) {
-		t.Error("PickRandom(7) is non-deterministic")
+	a, b := PickRandom(7), PickRandom(7)
+	if a != b {
+		t.Errorf("PickRandom(7) is non-deterministic: %q != %q", a, b)
 	}
 }
 

@@ -47,6 +47,7 @@ type Selection struct {
 	Path        string
 	Branch      string
 	Status      worktree.Status
+	HasSession  bool
 	ForceDelete bool
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/tqer39/ccw-cli/internal/claude"
 	"github.com/tqer39/ccw-cli/internal/cli"
 	"github.com/tqer39/ccw-cli/internal/gitx"
+	"github.com/tqer39/ccw-cli/internal/namegen"
 	"github.com/tqer39/ccw-cli/internal/picker"
 	"github.com/tqer39/ccw-cli/internal/superpowers"
 	"github.com/tqer39/ccw-cli/internal/ui"
@@ -71,7 +72,8 @@ func run(flags cli.Flags) int {
 	}
 
 	if flags.NewWorktree {
-		code, err := claude.LaunchNew(mainRepo, preamble, flags.Passthrough)
+		name := namegen.Generate()
+		code, err := claude.LaunchNew(mainRepo, name, preamble, flags.Passthrough)
 		if err != nil {
 			ui.Error("%v", err)
 			return 1
@@ -93,17 +95,26 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 		case picker.ActionCancel:
 			return 0
 		case picker.ActionNew:
-			code, err := claude.LaunchNew(mainRepo, "", passthrough)
+			name := namegen.Generate()
+			code, err := claude.LaunchNew(mainRepo, name, "", passthrough)
 			if err != nil {
 				ui.Error("%v", err)
 				return 1
 			}
 			return code
 		case picker.ActionResume:
-			code, err := claude.Resume(sel.Path, passthrough)
+			code, err := claude.Continue(sel.Path, passthrough)
 			if err != nil {
 				ui.Error("%v", err)
 				return 1
+			}
+			if code != 0 && !sel.HasSession {
+				name := worktreeName(sel.Path)
+				code, err = claude.LaunchNew(sel.Path, name, "", passthrough)
+				if err != nil {
+					ui.Error("%v", err)
+					return 1
+				}
 			}
 			return code
 		case picker.ActionDelete:
@@ -235,6 +246,15 @@ func resolveMainRepo() (string, error) {
 		return "", fmt.Errorf("resolve main repo: %w", err)
 	}
 	return mainRepo, nil
+}
+
+func worktreeName(path string) string {
+	for i := len(path) - 1; i >= 0; i-- {
+		if path[i] == '/' {
+			return path[i+1:]
+		}
+	}
+	return path
 }
 
 func maybeSuperpowers(enabled bool, interactive, assumeYes bool) (string, error) {
