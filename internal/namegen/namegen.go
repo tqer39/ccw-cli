@@ -1,5 +1,5 @@
-// Package namegen generates deterministic worktree / Claude Code session names
-// of the form "ccw-<owner>-<repo>-<shorthash6>".
+// Package namegen generates timestamp-based worktree / Claude Code session names
+// of the form "ccw-<owner>-<repo>-<yymmdd>-<hhmmss>" using local time.
 package namegen
 
 import (
@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/tqer39/ccw-cli/internal/gitx"
 )
@@ -29,34 +30,36 @@ func normalize(s string) string {
 	return s
 }
 
-// origin / branch / shorthash hooks are package-level vars so tests can
-// substitute fakes without spinning up a real repo.
+// origin / worktree-list / clock hooks are package-level vars so tests can
+// substitute fakes without spinning up a real repo or a real clock.
 var (
-	originURLFn     = gitx.OriginURL
-	defaultBranchFn = gitx.DefaultBranch
-	shortHashFn     = gitx.ShortHash
-	worktreeListFn  = gitx.ListRaw
+	originURLFn    = gitx.OriginURL
+	worktreeListFn = gitx.ListRaw
+	nowFn          = time.Now
 )
 
 // maxCollisionSuffix bounds numeric suffixes attempted before giving up.
 const maxCollisionSuffix = 99
 
-// buildName composes "ccw-<owner>-<repo>-<shorthash>" with normalization,
+// timestampLayout is Go's reference time formatted as yymmdd-hhmmss.
+const timestampLayout = "060102-150405"
+
+// buildName composes "ccw-<owner>-<repo>-<tail>" with normalization,
 // suffixing "-2", "-3", ... when the candidate is in `taken`.
-func buildName(owner, repo, shorthash string, taken map[string]bool) (string, error) {
+func buildName(owner, repo, tail string, taken map[string]bool) (string, error) {
 	o := normalize(owner)
 	r := normalize(repo)
-	h := normalize(shorthash)
+	t := normalize(tail)
 	if o == "" {
 		return "", fmt.Errorf("buildName: owner is empty after normalization (input %q)", owner)
 	}
 	if r == "" {
 		return "", fmt.Errorf("buildName: repo is empty after normalization (input %q)", repo)
 	}
-	if h == "" {
-		return "", fmt.Errorf("buildName: shorthash is empty after normalization (input %q)", shorthash)
+	if t == "" {
+		return "", fmt.Errorf("buildName: tail is empty after normalization (input %q)", tail)
 	}
-	base := fmt.Sprintf("ccw-%s-%s-%s", o, r, h)
+	base := fmt.Sprintf("ccw-%s-%s-%s", o, r, t)
 	if !taken[base] {
 		return base, nil
 	}
@@ -69,8 +72,9 @@ func buildName(owner, repo, shorthash string, taken map[string]bool) (string, er
 	return "", fmt.Errorf("buildName: %d collisions for %q, giving up", maxCollisionSuffix, base)
 }
 
-// Generate returns a deterministic worktree name of the form
-// "ccw-<owner>-<repo>-<shorthash6>" for the repository at mainRepo.
+// Generate returns a worktree name of the form
+// "ccw-<owner>-<repo>-<yymmdd>-<hhmmss>" for the repository at mainRepo.
+// The timestamp is formatted from time.Now() in local time.
 // When `origin` is unset, owner becomes "local" and repo is the basename
 // of mainRepo. Numeric "-N" suffixes are appended on collision (cap: 99).
 func Generate(mainRepo string) (string, error) {
@@ -78,19 +82,12 @@ func Generate(mainRepo string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	branch, err := defaultBranchFn(mainRepo)
-	if err != nil {
-		return "", fmt.Errorf("default branch: %w", err)
-	}
-	shorthash, err := shortHashFn(mainRepo, branch, 6)
-	if err != nil {
-		return "", fmt.Errorf("short hash: %w", err)
-	}
+	ts := nowFn().Format(timestampLayout)
 	taken, err := takenNames(mainRepo)
 	if err != nil {
 		return "", err
 	}
-	return buildName(owner, repo, shorthash, taken)
+	return buildName(owner, repo, ts, taken)
 }
 
 func resolveOwnerRepo(mainRepo string) (string, string, error) {
