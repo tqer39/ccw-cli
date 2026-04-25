@@ -13,10 +13,17 @@ func (m Model) View() string {
 	switch m.state {
 	case stateList:
 		base := m.list.View()
-		if !m.ghAvailable {
-			return base + "\n\n💡 Install gh to see PR titles here"
+		footer := ""
+		switch {
+		case !m.ghAvailable:
+			footer = "💡 Install gh to see PR titles here"
+		case m.tip != "":
+			footer = "💡 Tip: " + m.tip
 		}
-		return base
+		if footer == "" {
+			return base
+		}
+		return base + "\n\n" + footer
 	case stateMenu:
 		return m.menuView()
 	case stateDeleteConfirm:
