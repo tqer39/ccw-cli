@@ -103,20 +103,7 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 			}
 			return code
 		case picker.ActionResume:
-			code, err := claude.Continue(sel.Path, passthrough)
-			if err != nil {
-				ui.Error("%v", err)
-				return 1
-			}
-			if code != 0 && !sel.HasSession {
-				name := worktreeName(sel.Path)
-				code, err = claude.LaunchNew(sel.Path, name, "", passthrough)
-				if err != nil {
-					ui.Error("%v", err)
-					return 1
-				}
-			}
-			return code
+			return runResume(sel, passthrough)
 		case picker.ActionDelete:
 			if err := worktree.Remove(mainRepo, sel.Path, sel.ForceDelete); err != nil {
 				ui.Error("%v", err)
@@ -129,6 +116,35 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 			}
 		}
 	}
+}
+
+// runResume launches `claude --continue` when the worktree has a session log,
+// or `claude -n <name>` for fresh starts. Falls back to a new launch when
+// `--continue` exits non-zero (e.g. session file removed underfoot).
+func runResume(sel picker.Selection, passthrough []string) int {
+	if !sel.HasSession {
+		name := worktreeName(sel.Path)
+		code, err := claude.LaunchNew(sel.Path, name, "", passthrough)
+		if err != nil {
+			ui.Error("%v", err)
+			return 1
+		}
+		return code
+	}
+	code, err := claude.Continue(sel.Path, passthrough)
+	if err != nil {
+		ui.Error("%v", err)
+		return 1
+	}
+	if code != 0 {
+		name := worktreeName(sel.Path)
+		code, err = claude.LaunchNew(sel.Path, name, "", passthrough)
+		if err != nil {
+			ui.Error("%v", err)
+			return 1
+		}
+	}
+	return code
 }
 
 func applyBulkDelete(mainRepo string, bulk picker.BulkDeletion) int {
