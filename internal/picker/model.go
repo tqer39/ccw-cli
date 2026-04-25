@@ -69,6 +69,8 @@ func Icon(s worktree.Status) string {
 		return "⚠"
 	case worktree.StatusDirty:
 		return "⛔"
+	case worktree.StatusPrunable:
+		return "🧹"
 	default:
 		return "•"
 	}

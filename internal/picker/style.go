@@ -23,6 +23,8 @@ func Badge(s worktree.Status) string {
 		style = style.Background(lipgloss.Color("11")).Foreground(lipgloss.Color("0"))
 	case worktree.StatusDirty:
 		style = style.Background(lipgloss.Color("9")).Foreground(lipgloss.Color("15"))
+	case worktree.StatusPrunable:
+		style = style.Background(lipgloss.Color("8")).Foreground(lipgloss.Color("15"))
 	}
 	return style.Render(label)
 }
@@ -35,6 +37,8 @@ func badgeLabel(s worktree.Status) (colored, plain string) {
 		return "LOCAL ", "[local] "
 	case worktree.StatusDirty:
 		return "DIRTY ", "[dirty] "
+	case worktree.StatusPrunable:
+		return "PRUNE ", "[prune] "
 	default:
 		return "??????", "[?]     "
 	}

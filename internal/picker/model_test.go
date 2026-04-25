@@ -18,6 +18,7 @@ func TestIcon(t *testing.T) {
 		{worktree.StatusPushed, "✅"},
 		{worktree.StatusLocalOnly, "⚠"},
 		{worktree.StatusDirty, "⛔"},
+		{worktree.StatusPrunable, "🧹"},
 		{worktree.Status(99), "•"},
 	}
 	for _, tc := range cases {
