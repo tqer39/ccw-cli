@@ -50,3 +50,29 @@ func TestPRBadge_UnknownState(t *testing.T) {
 		t.Errorf("PRBadge(WEIRD) = %q, want [weird]", got)
 	}
 }
+
+func TestResumeBadge_HasSession(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	if got := ResumeBadge(true); got != "[RESUME]" {
+		t.Errorf("ResumeBadge(true) NO_COLOR = %q, want [RESUME]", got)
+	}
+	if got := ResumeBadge(false); got != "[NEW]   " {
+		t.Errorf("ResumeBadge(false) NO_COLOR = %q, want [NEW]   ", got)
+	}
+}
+
+func TestResumeBadge_Colored(t *testing.T) {
+	t.Setenv("NO_COLOR", "")
+	prev := lipgloss.ColorProfile()
+	lipgloss.SetColorProfile(termenv.ANSI256)
+	t.Cleanup(func() { lipgloss.SetColorProfile(prev) })
+
+	got := ResumeBadge(true)
+	if !strings.Contains(got, "RESUME") {
+		t.Errorf("ResumeBadge(true) = %q, want substring RESUME", got)
+	}
+	got = ResumeBadge(false)
+	if !strings.Contains(got, "NEW") {
+		t.Errorf("ResumeBadge(false) = %q, want substring NEW", got)
+	}
+}
