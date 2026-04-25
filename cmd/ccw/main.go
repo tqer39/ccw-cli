@@ -11,6 +11,7 @@ import (
 	"github.com/tqer39/ccw-cli/internal/claude"
 	"github.com/tqer39/ccw-cli/internal/cli"
 	"github.com/tqer39/ccw-cli/internal/gitx"
+	"github.com/tqer39/ccw-cli/internal/i18n"
 	"github.com/tqer39/ccw-cli/internal/namegen"
 	"github.com/tqer39/ccw-cli/internal/picker"
 	"github.com/tqer39/ccw-cli/internal/superpowers"
@@ -24,8 +25,13 @@ func main() {
 
 	flags, err := cli.Parse(os.Args[1:])
 	if err != nil {
+		_ = i18n.Init("")
 		ui.Error("%v", err)
 		cli.PrintHelp(os.Stderr)
+		os.Exit(2)
+	}
+	if err := i18n.Init(flags.Lang); err != nil {
+		ui.Error("%v", err)
 		os.Exit(2)
 	}
 	if flags.Help {
