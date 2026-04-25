@@ -232,7 +232,12 @@ func runCleanAll(mainRepo string, flags cli.Flags, interactive bool) int {
 		Force: flags.Force,
 	}
 	for _, i := range targets {
-		bulk.Paths = append(bulk.Paths, infos[i].Path)
+		w := infos[i]
+		if w.Status == worktree.StatusPrunable {
+			bulk.RunPrune = true
+			continue
+		}
+		bulk.Paths = append(bulk.Paths, w.Path)
 	}
 	return applyBulkDelete(mainRepo, bulk)
 }
