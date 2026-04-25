@@ -12,7 +12,7 @@ func TestView_FooterShowsTips(t *testing.T) {
 	m.ghAvailable = true
 	m.tip = "test tip line"
 	m.state = stateList
-	out := m.View()
+	out := m.View().Content
 	if !strings.Contains(out, "💡 Tip: test tip line") {
 		t.Errorf("View footer missing tip:\n%s", out)
 	}
@@ -23,7 +23,7 @@ func TestView_FooterShowsGhHintWhenUnavailable(t *testing.T) {
 	m.ghAvailable = false
 	m.tip = "should-not-show"
 	m.state = stateList
-	out := m.View()
+	out := m.View().Content
 	if !strings.Contains(out, "Install gh") {
 		t.Errorf("View should show gh hint when gh unavailable:\n%s", out)
 	}
