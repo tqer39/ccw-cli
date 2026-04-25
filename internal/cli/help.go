@@ -13,6 +13,13 @@ Options:
   -v, --version        Show version
   -h, --help           Show this help
 
+List mode (non-interactive):
+  -L, --list           Print ccw worktrees and exit (text table)
+  -d, --dir <path>     Target directory for --list (defaults to cwd)
+      --json           Emit JSON instead of the text table
+      --no-pr          Skip gh PR lookup
+      --no-session     Skip session log lookup
+
 Bulk delete:
       --clean-all        Bulk delete mode
       --status=<filter>  all | pushed | local-only | dirty (default: all)
@@ -29,6 +36,7 @@ Environment:
 Exit codes:
   0  success
   1  user error / cancellation
+  2  system error (git failure, etc.)
   *  passthrough from ` + "`claude`" + `
 
 Repository: https://github.com/tqer39/ccw-cli
