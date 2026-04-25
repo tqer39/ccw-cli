@@ -25,9 +25,9 @@ func TestPRBadge_NoColorLowercase(t *testing.T) {
 
 func TestPRBadge_ColoredContainsLabel(t *testing.T) {
 	t.Setenv("NO_COLOR", "")
-	// lipgloss v2 の Style.Render は検出したプロファイルに依存せず
-	// 常に ANSI エスケープを返す（プロファイル側のフィルタは Writer 層で行われる）。
-	// そのためここで profile を強制設定する必要はない。
+	// lipgloss v2's Style.Render always emits ANSI escapes regardless of the
+	// detected profile (profile filtering happens in the Writer layer), so we
+	// don't need to force a profile here.
 
 	for _, state := range []string{"OPEN", "DRAFT", "MERGED", "CLOSED"} {
 		got := PRBadge(state)
@@ -60,8 +60,8 @@ func TestResumeBadge_HasSession(t *testing.T) {
 
 func TestResumeBadge_Colored(t *testing.T) {
 	t.Setenv("NO_COLOR", "")
-	// lipgloss v2 の Style.Render は常に ANSI エスケープを返す
-	// （プロファイル側のフィルタは Writer 層）。PRBadge と同じ扱いにする。
+	// lipgloss v2's Style.Render always emits ANSI escapes (profile filtering
+	// happens in the Writer layer); same handling as PRBadge.
 	got := ResumeBadge(true)
 	if !strings.Contains(got, "RESUME") {
 		t.Errorf("ResumeBadge(true) = %q, want substring RESUME", got)
