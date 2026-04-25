@@ -91,7 +91,7 @@ When ccw creates a new worktree, the worktree directory and the Claude Code sess
 - Branch: `worktree-<name>`
 - Session name: `<name>` (set via `claude -n <name>`)
 
-`<name>` is generated like `quick-falcon-7bd2`. Renaming the session manually with `/rename` is fine — ccw does not track it, and `--continue` keys off the working directory so conversation restore is unaffected.
+`<name>` is generated as `ccw-<owner>-<repo>-<shorthash6>` (e.g. `ccw-tqer39-ccw-cli-a3f2b1`). `<owner>` / `<repo>` come from the `origin` remote URL; `<shorthash6>` is the 6-char short SHA of the local default branch tip at creation time. When `origin` is unset, `<owner>` becomes `local` and `<repo>` is the directory basename. Duplicate names are disambiguated with `-2`, `-3`, … Renaming the session manually with `/rename` is fine — ccw does not track it, and `--continue` keys off the working directory so conversation restore is unaffected.
 
 ## 📦 Installation
 
