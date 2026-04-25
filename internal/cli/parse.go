@@ -19,6 +19,11 @@ type Flags struct {
 	Force        bool
 	DryRun       bool
 	AssumeYes    bool
+	List         bool
+	TargetDir    string
+	JSON         bool
+	NoPR         bool
+	NoSession    bool
 	Passthrough  []string
 }
 
@@ -41,6 +46,11 @@ func Parse(argv []string) (Flags, error) {
 	fs.BoolVar(&f.Force, "force", false, "allow --force removal of dirty worktrees")
 	fs.BoolVar(&f.DryRun, "dry-run", false, "list targets without deleting")
 	fs.BoolVarP(&f.AssumeYes, "yes", "y", false, "skip confirmation prompts (--clean-all, -s plugin install)")
+	fs.BoolVarP(&f.List, "list", "L", false, "non-interactive list of ccw worktrees (text by default)")
+	fs.StringVarP(&f.TargetDir, "dir", "d", "", "target directory for --list (defaults to cwd)")
+	fs.BoolVar(&f.JSON, "json", false, "use JSON output for --list")
+	fs.BoolVar(&f.NoPR, "no-pr", false, "skip gh PR lookup for --list")
+	fs.BoolVar(&f.NoSession, "no-session", false, "skip session log lookup for --list")
 
 	if err := fs.Parse(pre); err != nil {
 		return Flags{}, fmt.Errorf("parse flags: %w", err)
@@ -51,21 +61,52 @@ func Parse(argv []string) (Flags, error) {
 	if f.Superpowers {
 		f.NewWorktree = true
 	}
-	if f.CleanAll {
-		if f.StatusFilter == "" {
-			f.StatusFilter = "all"
-		}
-		switch f.StatusFilter {
-		case "all", "pushed", "local-only", "dirty":
-		default:
-			return Flags{}, fmt.Errorf("--status: invalid value %q (want all|pushed|local-only|dirty)", f.StatusFilter)
-		}
-		if f.StatusFilter == "dirty" && !f.Force {
-			return Flags{}, fmt.Errorf("--status=dirty requires --force")
-		}
+	if err := validateCleanAll(&f); err != nil {
+		return Flags{}, err
+	}
+	if err := validateList(f, post); err != nil {
+		return Flags{}, err
 	}
 	f.Passthrough = post
 	return f, nil
+}
+
+func validateCleanAll(f *Flags) error {
+	if !f.CleanAll {
+		return nil
+	}
+	if f.StatusFilter == "" {
+		f.StatusFilter = "all"
+	}
+	switch f.StatusFilter {
+	case "all", "pushed", "local-only", "dirty":
+	default:
+		return fmt.Errorf("--status: invalid value %q (want all|pushed|local-only|dirty)", f.StatusFilter)
+	}
+	if f.StatusFilter == "dirty" && !f.Force {
+		return fmt.Errorf("--status=dirty requires --force")
+	}
+	return nil
+}
+
+func validateList(f Flags, post []string) error {
+	if f.TargetDir != "" && !f.List {
+		return fmt.Errorf("--dir/-d requires --list/-L")
+	}
+	if !f.List {
+		return nil
+	}
+	switch {
+	case f.NewWorktree:
+		return fmt.Errorf("--list cannot be combined with --new")
+	case f.Superpowers:
+		return fmt.Errorf("--list cannot be combined with --superpowers")
+	case f.CleanAll:
+		return fmt.Errorf("--list cannot be combined with --clean-all")
+	case post != nil:
+		return fmt.Errorf("--list does not accept passthrough args after --")
+	}
+	return nil
 }
 
 // splitAtDoubleDash returns (before, after) around the first bare "--" token.
