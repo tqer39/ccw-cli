@@ -19,6 +19,13 @@ help:
       -h, --help           このヘルプを表示
           --lang=<en|ja>   出力言語を強制 (CCW_LANG・locale より優先)
 
+    リストモード (非対話):
+      -L, --list           ccw worktree を表形式で出力して終了
+      -d, --dir <path>     --list の対象ディレクトリ (デフォルトは cwd)
+          --json           表形式の代わりに JSON で出力
+          --no-pr          gh PR 取得をスキップ
+          --no-session     session ログ探索をスキップ
+
     一括削除:
           --clean-all        一括削除モード
           --status=<filter>  all | pushed | local-only | dirty (デフォルト: all)
@@ -36,6 +43,7 @@ help:
     終了コード:
       0  成功
       1  ユーザーエラー / キャンセル
+      2  システムエラー (git 失敗 等)
       *  `claude` の終了コードをそのまま返す
 
     リポジトリ: https://github.com/tqer39/ccw-cli

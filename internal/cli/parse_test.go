@@ -153,6 +153,74 @@ func TestParse_Table(t *testing.T) {
 	}
 }
 
+func TestParse_ListShortFlag(t *testing.T) {
+	f, err := Parse([]string{"-L"})
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if !f.List {
+		t.Error("List = false, want true")
+	}
+}
+
+func TestParse_ListLongFlag(t *testing.T) {
+	f, _ := Parse([]string{"--list"})
+	if !f.List {
+		t.Error("List = false on --list")
+	}
+}
+
+func TestParse_ListWithJSON(t *testing.T) {
+	f, _ := Parse([]string{"-L", "--json"})
+	if !f.List || !f.JSON {
+		t.Errorf("List=%v JSON=%v", f.List, f.JSON)
+	}
+}
+
+func TestParse_ListWithDir(t *testing.T) {
+	f, _ := Parse([]string{"-L", "-d", "/tmp/repo"})
+	if f.TargetDir != "/tmp/repo" {
+		t.Errorf("TargetDir = %q", f.TargetDir)
+	}
+}
+
+func TestParse_ListWithNoPRAndNoSession(t *testing.T) {
+	f, _ := Parse([]string{"-L", "--no-pr", "--no-session"})
+	if !f.NoPR || !f.NoSession {
+		t.Errorf("NoPR=%v NoSession=%v", f.NoPR, f.NoSession)
+	}
+}
+
+func TestParse_DirWithoutListErrors(t *testing.T) {
+	if _, err := Parse([]string{"-d", "/x"}); err == nil {
+		t.Fatal("want error: -d without -L")
+	}
+}
+
+func TestParse_ListWithNewIsExclusive(t *testing.T) {
+	if _, err := Parse([]string{"-L", "-n"}); err == nil {
+		t.Fatal("want error: -L with -n")
+	}
+}
+
+func TestParse_ListWithSuperpowersIsExclusive(t *testing.T) {
+	if _, err := Parse([]string{"-L", "-s"}); err == nil {
+		t.Fatal("want error: -L with -s")
+	}
+}
+
+func TestParse_ListWithCleanAllIsExclusive(t *testing.T) {
+	if _, err := Parse([]string{"-L", "--clean-all"}); err == nil {
+		t.Fatal("want error: -L with --clean-all")
+	}
+}
+
+func TestParse_ListWithPassthroughIsExclusive(t *testing.T) {
+	if _, err := Parse([]string{"-L", "--", "--model", "x"}); err == nil {
+		t.Fatal("want error: -L with -- passthrough")
+	}
+}
+
 func TestParse_LangFlag(t *testing.T) {
 	cases := []struct {
 		name    string

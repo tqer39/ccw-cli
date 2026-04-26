@@ -4,7 +4,9 @@ package worktree
 
 import (
 	"fmt"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/tqer39/ccw-cli/internal/gitx"
 )
@@ -40,11 +42,20 @@ func (s Status) String() string {
 	}
 }
 
+// CommitInfo summarizes the HEAD commit of a worktree.
+type CommitInfo struct {
+	SHA     string
+	Subject string
+	Time    time.Time
+}
+
 // Info is a ccw-managed worktree entry with its classified status and
 // quantitative indicators (ahead/behind commits, dirty file count).
 // AheadCount/BehindCount are meaningful for StatusPushed and StatusLocalOnly.
 // DirtyCount is meaningful only when Status == StatusDirty.
 // HasSession indicates whether a Claude Code session exists for this worktree.
+// CreatedAt / LastCommit / SessionPath are populated for non-prunable entries
+// when retrieval succeeds; otherwise nil / empty.
 type Info struct {
 	Path        string
 	Branch      string
@@ -53,6 +64,9 @@ type Info struct {
 	BehindCount int
 	DirtyCount  int
 	HasSession  bool
+	CreatedAt   *time.Time
+	LastCommit  *CommitInfo
+	SessionPath string
 }
 
 const ccwPathMarker = "/.claude/worktrees/"
@@ -89,6 +103,16 @@ func List(mainRepo string) ([]Info, error) {
 			info.DirtyCount = n
 		}
 		info.HasSession = HasSession(e.Path)
+		if info.HasSession {
+			info.SessionPath = SessionLogPath(e.Path)
+		}
+		if st, err := os.Stat(e.Path); err == nil {
+			t := st.ModTime()
+			info.CreatedAt = &t
+		}
+		if sha, subject, ts, err := gitx.LastCommit(e.Path); err == nil {
+			info.LastCommit = &CommitInfo{SHA: sha, Subject: subject, Time: ts}
+		}
 		result = append(result, info)
 	}
 	return result, nil

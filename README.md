@@ -35,6 +35,7 @@ That's it. `ccw` scans `.claude/worktrees/` and shows the picker, or spins up a 
 - 🧹 **Bulk cleanup** — `[clean pushed]` or `ccw --clean-all` sweeps the worktrees you're done with
 - 🦸 **"Design first" startup** — `-s` tells claude to follow the brainstorming → writing-plans → executing-plans flow (prompts to install the superpowers plugin if missing)
 - ➡️ **claude flags pass through** — anything after `--` goes to claude untouched, so `--model` and friends still work
+- 📋 **Machine-readable list** — `ccw -L --json` aggregates worktree × git × PR × session info in one shot, ideal for scripts and Claude Code agent use
 
 ## 🎬 Demo
 
@@ -47,6 +48,9 @@ ccw                                       # pick an existing worktree, or start 
 ccw -n                                    # new worktree, skip picker
 ccw -s                                    # new worktree + superpowers preamble
 ccw -- --model <model-id>                 # pass-through: any flags after `--` go to claude verbatim
+ccw -L                                    # list ccw worktrees (text table)
+ccw -L --json                             # same, JSON for scripts / agents
+ccw -L -d ~/repo --no-pr --no-session     # target a specific repo, skip gh and session lookup
 ccw --clean-all --status=pushed --dry-run # preview bulk delete targets
 ccw --clean-all --force -y                # nuke everything without prompt
 ```

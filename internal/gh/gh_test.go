@@ -1,9 +1,11 @@
 package gh_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/tqer39/ccw-cli/internal/gh"
 )
@@ -81,5 +83,27 @@ func TestPRStatus_RunnerError(t *testing.T) {
 	_, err := gh.PRStatusWith(r, []string{"any"})
 	if err == nil {
 		t.Fatal("want error when runner fails")
+	}
+}
+
+func TestPRStatusWithTimeout_Success(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("testdata", "pr_list.json"))
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	r := &fakeRunner{prJSON: string(data)}
+	got, err := gh.PRStatusWithTimeout(r, 1*time.Second, []string{"shimmying-frolicking-kahan"})
+	if err != nil {
+		t.Fatalf("PRStatusWithTimeout: %v", err)
+	}
+	if got["shimmying-frolicking-kahan"].Number != 12 {
+		t.Errorf("got = %+v", got)
+	}
+}
+
+func TestPRStatusWithTimeout_RunnerErrorReturnsError(t *testing.T) {
+	r := &fakeRunner{prErr: errors.New("boom")}
+	if _, err := gh.PRStatusWithTimeout(r, 1*time.Second, []string{"x"}); err == nil {
+		t.Fatal("want error, got nil")
 	}
 }
