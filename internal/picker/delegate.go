@@ -13,13 +13,13 @@ import (
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
-// rowDelegate renders worktree items as four lines: header (resume + name +
-// status + indicators), branch, pr, path.
+// rowDelegate renders worktree items as three lines: header (resume + tree
+// icon + worktree name + status badge + indicators), branch, pr.
 type rowDelegate struct {
 	prUnavailable bool
 }
 
-func (d rowDelegate) Height() int                             { return 4 }
+func (d rowDelegate) Height() int                             { return 3 }
 func (d rowDelegate) Spacing() int                            { return 1 }
 func (d rowDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 
@@ -50,7 +50,7 @@ func renderRow(li listItem, width int, prUnavailable bool, selected bool) string
 		indicators = "(missing on disk)"
 	}
 
-	header := fmt.Sprintf("%s%s · %s", prefix, resume, name)
+	header := fmt.Sprintf("%s%s · 🌲 %s", prefix, resume, name)
 	right := fmt.Sprintf("%s  %s", status, indicators)
 	header = padBetween(header, right, width)
 
@@ -60,16 +60,14 @@ func renderRow(li listItem, width int, prUnavailable bool, selected bool) string
 		prCell = renderPRCell(li.pr)
 	}
 	prLine := "    pr:      " + prCell
-	pathLine := fmt.Sprintf("    path:    %s", wt.Path)
 
 	if width > 0 {
 		header = truncateToWidth(header, width)
 		branchLine = truncateToWidth(branchLine, width)
 		prLine = truncateToWidth(prLine, width)
-		pathLine = truncateToWidth(pathLine, width)
 	}
 
-	return header + "\n" + branchLine + "\n" + prLine + "\n" + pathLine
+	return header + "\n" + branchLine + "\n" + prLine
 }
 
 // padBetween places left and right on the same line with spaces between so
