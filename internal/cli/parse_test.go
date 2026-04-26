@@ -48,21 +48,6 @@ func TestParse_Table(t *testing.T) {
 			want: Flags{NewWorktree: true},
 		},
 		{
-			name: "short superpowers implies new",
-			argv: []string{"-s"},
-			want: Flags{NewWorktree: true, Superpowers: true},
-		},
-		{
-			name: "long superpowers implies new",
-			argv: []string{"--superpowers"},
-			want: Flags{NewWorktree: true, Superpowers: true},
-		},
-		{
-			name: "new and superpowers combined",
-			argv: []string{"-n", "-s"},
-			want: Flags{NewWorktree: true, Superpowers: true},
-		},
-		{
 			name: "double dash only",
 			argv: []string{"--"},
 			want: Flags{Passthrough: []string{}},
@@ -76,11 +61,6 @@ func TestParse_Table(t *testing.T) {
 			name: "new with passthrough",
 			argv: []string{"-n", "--", "--model", "claude-opus-4-7"},
 			want: Flags{NewWorktree: true, Passthrough: []string{"--model", "claude-opus-4-7"}},
-		},
-		{
-			name: "superpowers with passthrough",
-			argv: []string{"-s", "--", "--resume"},
-			want: Flags{NewWorktree: true, Superpowers: true, Passthrough: []string{"--resume"}},
 		},
 		{
 			name:    "unknown long flag",
@@ -200,12 +180,6 @@ func TestParse_DirWithoutListErrors(t *testing.T) {
 func TestParse_ListWithNewIsExclusive(t *testing.T) {
 	if _, err := Parse([]string{"-L", "-n"}); err == nil {
 		t.Fatal("want error: -L with -n")
-	}
-}
-
-func TestParse_ListWithSuperpowersIsExclusive(t *testing.T) {
-	if _, err := Parse([]string{"-L", "-s"}); err == nil {
-		t.Fatal("want error: -L with -s")
 	}
 }
 

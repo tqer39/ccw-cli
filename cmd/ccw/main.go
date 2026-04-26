@@ -1,6 +1,6 @@
 // Command ccw launches Claude Code in an isolated git worktree.
 //
-// Phase 3 status: -h / -v / -n / -s and the picker are at parity with the
+// Phase 3 status: -h / -v / -n and the picker are at parity with the
 // bash implementation. The bash `bin/ccw` is kept as a transitional fallback.
 package main
 
@@ -18,7 +18,6 @@ import (
 	"github.com/tqer39/ccw-cli/internal/listmode"
 	"github.com/tqer39/ccw-cli/internal/namegen"
 	"github.com/tqer39/ccw-cli/internal/picker"
-	"github.com/tqer39/ccw-cli/internal/superpowers"
 	"github.com/tqer39/ccw-cli/internal/ui"
 	"github.com/tqer39/ccw-cli/internal/version"
 	"github.com/tqer39/ccw-cli/internal/worktree"
@@ -79,19 +78,13 @@ func run(flags cli.Flags) int {
 	}
 	_ = gitx.SetOriginHead(mainRepo)
 
-	preamble, err := maybeSuperpowers(flags.Superpowers, interactive, flags.AssumeYes)
-	if err != nil {
-		ui.Error("%v", err)
-		return 1
-	}
-
 	if flags.NewWorktree {
 		name, err := namegen.Generate(mainRepo)
 		if err != nil {
 			ui.Error("generate worktree name: %v", err)
 			return 1
 		}
-		code, err := claude.LaunchNew(mainRepo, name, preamble, flags.Passthrough)
+		code, err := claude.LaunchNew(mainRepo, name, "", flags.Passthrough)
 		if err != nil {
 			ui.Error("%v", err)
 			return 1
@@ -390,18 +383,4 @@ func resolveListRepo(mainRepo string) (listmode.RepoInfo, error) {
 		repo.DefaultBranch = db
 	}
 	return repo, nil
-}
-
-func maybeSuperpowers(enabled bool, interactive, assumeYes bool) (string, error) {
-	if !enabled {
-		return "", nil
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("resolve HOME: %w", err)
-	}
-	if err := superpowers.EnsureInstalled(os.Stdin, os.Stderr, home, interactive, assumeYes); err != nil {
-		return "", fmt.Errorf("superpowers install: %w", err)
-	}
-	return superpowers.Preamble(), nil
 }
