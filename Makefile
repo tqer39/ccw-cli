@@ -1,4 +1,4 @@
-.PHONY: bootstrap build test lint tidy run clean release-check release-snapshot release-clean
+.PHONY: bootstrap build test lint tidy run clean release-check release-snapshot release-clean coverage coverage-html
 
 build:
 	go build -o ccw ./cmd/ccw
@@ -16,7 +16,7 @@ run:
 	go run ./cmd/ccw $(ARGS)
 
 clean:
-	rm -f ccw coverage.out
+	rm -f ccw coverage.out coverage.html
 
 release-check:
 	goreleaser check
@@ -26,6 +26,14 @@ release-snapshot:
 
 release-clean:
 	rm -rf dist/
+
+coverage:
+	go test ./... -race -coverprofile=coverage.out
+	go tool cover -func=coverage.out | tail -n 1
+
+coverage-html: coverage
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "open coverage.html"
 
 bootstrap:
 	@command -v brew >/dev/null 2>&1 || { \
