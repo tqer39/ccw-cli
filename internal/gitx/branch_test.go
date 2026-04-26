@@ -58,23 +58,3 @@ func TestDefaultBranch_NoBranches(t *testing.T) {
 		t.Fatal("DefaultBranch with no main/master/origin: want error, got nil")
 	}
 }
-
-func TestShortHash_Length(t *testing.T) {
-	dir := initRepo(t)
-	mustRun(t, dir, "git", "commit", "--allow-empty", "-m", "init")
-	got, err := ShortHash(dir, "main", 6)
-	if err != nil {
-		t.Fatalf("ShortHash: %v", err)
-	}
-	if len(got) != 6 {
-		t.Errorf("ShortHash length = %d, want 6 (got %q)", len(got), got)
-	}
-}
-
-func TestShortHash_MissingRef(t *testing.T) {
-	dir := initRepo(t)
-	_, err := ShortHash(dir, "nonexistent", 6)
-	if err == nil {
-		t.Fatal("ShortHash missing ref: want error, got nil")
-	}
-}

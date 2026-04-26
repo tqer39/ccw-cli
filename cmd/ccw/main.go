@@ -14,6 +14,7 @@ import (
 	"github.com/tqer39/ccw-cli/internal/cli"
 	"github.com/tqer39/ccw-cli/internal/gh"
 	"github.com/tqer39/ccw-cli/internal/gitx"
+	"github.com/tqer39/ccw-cli/internal/i18n"
 	"github.com/tqer39/ccw-cli/internal/listmode"
 	"github.com/tqer39/ccw-cli/internal/namegen"
 	"github.com/tqer39/ccw-cli/internal/picker"
@@ -28,8 +29,13 @@ func main() {
 
 	flags, err := cli.Parse(os.Args[1:])
 	if err != nil {
+		_ = i18n.Init("")
 		ui.Error("%v", err)
 		cli.PrintHelp(os.Stderr)
+		os.Exit(2)
+	}
+	if err := i18n.Init(flags.Lang); err != nil {
+		ui.Error("%v", err)
 		os.Exit(2)
 	}
 	if flags.Help {
@@ -82,7 +88,7 @@ func run(flags cli.Flags) int {
 	if flags.NewWorktree {
 		name, err := namegen.Generate(mainRepo)
 		if err != nil {
-			ui.Error("generate worktree name: %v\nhint: ensure a 'main' or 'master' branch with at least one commit, or run `git remote set-head origin -a`", err)
+			ui.Error("generate worktree name: %v", err)
 			return 1
 		}
 		code, err := claude.LaunchNew(mainRepo, name, preamble, flags.Passthrough)
@@ -109,7 +115,7 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 		case picker.ActionNew:
 			name, err := namegen.Generate(mainRepo)
 			if err != nil {
-				ui.Error("generate worktree name: %v\nhint: ensure a 'main' or 'master' branch with at least one commit, or run `git remote set-head origin -a`", err)
+				ui.Error("generate worktree name: %v", err)
 				return 1
 			}
 			code, err := claude.LaunchNew(mainRepo, name, "", passthrough)

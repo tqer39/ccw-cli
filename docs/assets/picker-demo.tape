@@ -1,5 +1,7 @@
 Output "/tmp/ccw-demo.gif"
 
+Env CCW_LANG en
+
 Set Shell "bash"
 Set FontSize 24
 Set Width 1440

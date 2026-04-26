@@ -19,6 +19,7 @@ type Flags struct {
 	Force        bool
 	DryRun       bool
 	AssumeYes    bool
+	Lang         string
 	List         bool
 	TargetDir    string
 	JSON         bool
@@ -46,6 +47,7 @@ func Parse(argv []string) (Flags, error) {
 	fs.BoolVar(&f.Force, "force", false, "allow --force removal of dirty worktrees")
 	fs.BoolVar(&f.DryRun, "dry-run", false, "list targets without deleting")
 	fs.BoolVarP(&f.AssumeYes, "yes", "y", false, "skip confirmation prompts (--clean-all, -s plugin install)")
+	fs.StringVar(&f.Lang, "lang", "", "force output language: en | ja")
 	fs.BoolVarP(&f.List, "list", "L", false, "non-interactive list of ccw worktrees (text by default)")
 	fs.StringVarP(&f.TargetDir, "dir", "d", "", "target directory for --list (defaults to cwd)")
 	fs.BoolVar(&f.JSON, "json", false, "use JSON output for --list")

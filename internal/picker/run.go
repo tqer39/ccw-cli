@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/tqer39/ccw-cli/internal/i18n"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
@@ -43,13 +44,13 @@ func runTUI(infos []worktree.Info) (Action, Selection, BulkDeletion, error) {
 }
 
 func runFallback(infos []worktree.Info, in io.Reader, out io.Writer) (Action, Selection, error) {
-	_, _ = fmt.Fprintln(out, "Select a worktree:")
+	_, _ = fmt.Fprintln(out, i18n.T(i18n.KeyFallbackHeader))
 	for i, w := range infos {
-		_, _ = fmt.Fprintf(out, "  %d) %s  (%s)  %s  %s\n", i+1, w.Branch, w.Status, fallbackIndicators(w), w.Path)
+		_, _ = fmt.Fprint(out, i18n.T(i18n.KeyFallbackLine, i+1, w.Branch, w.Status, fallbackIndicators(w), w.Path))
 	}
-	_, _ = fmt.Fprintln(out, "  n) new")
-	_, _ = fmt.Fprintln(out, "  q) quit")
-	_, _ = fmt.Fprint(out, "#? ")
+	_, _ = fmt.Fprintln(out, i18n.T(i18n.KeyFallbackNew))
+	_, _ = fmt.Fprintln(out, i18n.T(i18n.KeyFallbackQuit))
+	_, _ = fmt.Fprint(out, i18n.T(i18n.KeyFallbackPrompt))
 
 	r := bufio.NewReader(in)
 	line, err := r.ReadString('\n')

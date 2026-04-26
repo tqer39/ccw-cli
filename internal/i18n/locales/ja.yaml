@@ -1,0 +1,105 @@
+meta:
+  smoke: "日本語スモーク値"
+
+tip:
+  rename: "worktree 名 = session 名。/rename で改名しても ccw は追跡しません"
+  fromPR: "claude --from-pr <番号> で PR と紐づいた session を直接 resume できます"
+  cleanAll: "--clean-all で push 済み worktree を一括削除できます"
+  passthrough: "ccw -- --model <id> のように -- 以降は claude にそのまま渡されます"
+  resumeBadge: "RESUME バッジは ~/.claude/projects/ から判定しています"
+
+help:
+  usage: |
+    使い方: ccw [オプション] [-- <claude への引数>...]
+
+    オプション:
+      -n, --new            常に新しい worktree で開始 (picker をスキップ)
+      -s, --superpowers    superpowers プリアンブルを注入 (-n を含む)
+      -v, --version        バージョン表示
+      -h, --help           このヘルプを表示
+          --lang=<en|ja>   出力言語を強制 (CCW_LANG・locale より優先)
+
+    リストモード (非対話):
+      -L, --list           ccw worktree を表形式で出力して終了
+      -d, --dir <path>     --list の対象ディレクトリ (デフォルトは cwd)
+          --json           表形式の代わりに JSON で出力
+          --no-pr          gh PR 取得をスキップ
+          --no-session     session ログ探索をスキップ
+
+    一括削除:
+          --clean-all        一括削除モード
+          --status=<filter>  all | pushed | local-only | dirty (デフォルト: all)
+          --force            dirty な worktree を --force で削除
+          --dry-run          対象を表示して終了
+      -y, --yes              確認プロンプトをスキップ (--clean-all, -s plugin install)
+
+    `--` 以降の引数は `claude` にそのまま渡されます。
+
+    環境変数:
+      NO_COLOR=1           色付き出力を無効化
+      CCW_DEBUG=1          詳細デバッグログ
+      CCW_LANG=en|ja       出力言語を強制
+
+    終了コード:
+      0  成功
+      1  ユーザーエラー / キャンセル
+      2  システムエラー (git 失敗 等)
+      *  `claude` の終了コードをそのまま返す
+
+    リポジトリ: https://github.com/tqer39/ccw-cli
+
+picker:
+  footer:
+    installGh: "💡 gh をインストールすると PR タイトルを表示できます"
+    tip: "💡 Tip: %s"
+  action:
+    menu: |
+      選択中: %s (%s)
+      パス:    %s
+
+      操作を選択してください:
+        [r] 実行  — この worktree で claude を起動
+        [d] 削除  — この worktree を削除
+        [b] 戻る  — 一覧に戻る
+        [q] 終了  — キャンセル
+  delete:
+    confirm: |
+      worktree %s を削除しますか？
+        path:   %s
+        状態:   %s
+
+      実行: %s
+
+      確認 [y/N]
+  prune:
+    single: |
+      worktree %s を prune しますか？
+        path:   %s
+
+      実行: git worktree prune
+
+      確認 [y/N]
+    bulkHead: "prune 対象の worktree が %d 件あります（git worktree prune で一括削除されます）\n\n"
+    bulkLine: "  %s %s\n"
+    bulkFoot: "\n実行: git worktree prune\n\n確認 [y/N]\n"
+  bulk:
+    filterHead: "削除対象の状態を選択してください (トグル):\n\n"
+    filterLine: "  %s %s\n"
+    filterKeys: "  [p] pushed  [l] local-only  [d] dirty  [a] クリア\n"
+    filterFoot: "  [enter] 確定  [q/esc] 戻る\n"
+    confirmHead: "%d 件の worktree を削除しますか？\n\n"
+    pruneNote: "\nℹ prune 対象は削除後に `git worktree prune` で整理されます。\n"
+    dirtyWarn: |
+
+      ⚠ dirty な worktree が含まれます。`git worktree remove --force` が必要です。
+        [y] はい（dirty も含めて --force で削除）
+        [s] dirty をスキップ（clean のみ削除）
+        [N] キャンセル
+    confirmYN: "\n確認 [y/N]\n"
+
+fallback:
+  header: "worktree を選択してください:"
+  line: "  %d) %s  (%s)  %s  %s\n"
+  new: "  n) 新規"
+  quit: "  q) 終了"
+  prompt: "#? "

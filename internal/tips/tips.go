@@ -1,26 +1,32 @@
 // Package tips provides short rotating tip strings shown in the picker footer.
 package tips
 
-import "math/rand/v2"
+import (
+	"math/rand/v2"
 
-var defaults = []string{
-	"Worktree name = session name; renaming with /rename is fine, ccw doesn't track it",
-	"claude --from-pr <number> resumes a PR-linked session directly",
-	"--clean-all sweeps pushed worktrees in bulk",
-	"ccw -- --model <id> passes flags through to claude",
-	"The RESUME badge is derived from ~/.claude/projects/",
+	"github.com/tqer39/ccw-cli/internal/i18n"
+)
+
+var keys = []i18n.Key{
+	i18n.KeyTipRename,
+	i18n.KeyTipFromPR,
+	i18n.KeyTipCleanAll,
+	i18n.KeyTipPassthrough,
+	i18n.KeyTipResumeBadge,
 }
 
-// Defaults returns a copy of the built-in TIPS set.
+// Defaults returns the current language's tip strings.
 func Defaults() []string {
-	out := make([]string, len(defaults))
-	copy(out, defaults)
+	out := make([]string, len(keys))
+	for i, k := range keys {
+		out[i] = i18n.T(k)
+	}
 	return out
 }
 
 // PickRandom returns a single tip selected deterministically from seed.
 func PickRandom(seed uint64) string {
-	return pickFrom(defaults, seed)
+	return pickFrom(Defaults(), seed)
 }
 
 func pickFrom(set []string, seed uint64) string {

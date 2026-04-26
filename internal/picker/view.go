@@ -6,6 +6,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/tqer39/ccw-cli/internal/i18n"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
@@ -23,9 +24,9 @@ func (m Model) viewContent() string {
 		footer := ""
 		switch {
 		case !m.ghAvailable:
-			footer = "💡 Install gh to see PR titles here"
+			footer = i18n.T(i18n.KeyPickerFooterInstallGh)
 		case m.tip != "":
-			footer = "💡 Tip: " + m.tip
+			footer = i18n.T(i18n.KeyPickerFooterTip, m.tip)
 		}
 		if footer == "" {
 			return base
@@ -45,10 +46,7 @@ func (m Model) viewContent() string {
 
 func (m Model) menuView() string {
 	w := m.infos[m.selIdx]
-	return fmt.Sprintf(
-		"Selected: %s (%s)\nPath:     %s\n\nWhat to do?\n  [r] run    — start claude in this worktree\n  [d] delete — remove the worktree\n  [b] back   — return to list\n  [q] quit   — cancel\n",
-		w.Branch, w.Status, w.Path,
-	)
+	return i18n.T(i18n.KeyPickerActionMenu, w.Branch, w.Status, w.Path)
 }
 
 func (m Model) deleteConfirmView() string {
@@ -60,10 +58,7 @@ func (m Model) deleteConfirmView() string {
 	if w.Status == worktree.StatusDirty {
 		cmd = fmt.Sprintf("git worktree remove --force %q", w.Path)
 	}
-	return fmt.Sprintf(
-		"Delete worktree %s?\n  path:   %s\n  status: %s\n\nThis will run: %s\n\nConfirm? [y/N]\n",
-		w.Branch, w.Path, w.Status, cmd,
-	)
+	return i18n.T(i18n.KeyPickerDeleteConfirm, w.Branch, w.Path, w.Status, cmd)
 }
 
 func (m Model) prunableConfirmView() string {
@@ -75,23 +70,20 @@ func (m Model) prunableConfirmView() string {
 	}
 	if len(prunables) <= 1 {
 		w := m.infos[m.selIdx]
-		return fmt.Sprintf(
-			"Prune worktree %s?\n  path:   %s\n\nThis will run: git worktree prune\n\nConfirm? [y/N]\n",
-			w.Branch, w.Path,
-		)
+		return i18n.T(i18n.KeyPickerPruneSingle, w.Branch, w.Path)
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "Prune %d prunable worktrees? (git worktree prune removes all of them at once)\n\n", len(prunables))
+	b.WriteString(i18n.T(i18n.KeyPickerPruneBulkHead, len(prunables)))
 	for _, p := range prunables {
-		fmt.Fprintf(&b, "  %s %s\n", p.Branch, p.Path)
+		b.WriteString(i18n.T(i18n.KeyPickerPruneBulkLine, p.Branch, p.Path))
 	}
-	b.WriteString("\nThis will run: git worktree prune\n\nConfirm? [y/N]\n")
+	b.WriteString(i18n.T(i18n.KeyPickerPruneBulkFoot))
 	return b.String()
 }
 
 func (m Model) bulkFilterView() string {
 	var b strings.Builder
-	b.WriteString("Select statuses to delete (toggle):\n\n")
+	b.WriteString(i18n.T(i18n.KeyPickerBulkFilterHead))
 	for _, s := range []worktree.Status{
 		worktree.StatusPushed, worktree.StatusLocalOnly, worktree.StatusDirty,
 	} {
@@ -99,16 +91,16 @@ func (m Model) bulkFilterView() string {
 		if m.bulkFilter[s] {
 			mark = "[x]"
 		}
-		fmt.Fprintf(&b, "  %s %s\n", mark, s)
+		b.WriteString(i18n.T(i18n.KeyPickerBulkFilterLine, mark, s))
 	}
-	b.WriteString("\n  [p] pushed  [l] local-only  [d] dirty  [a] clear\n")
-	b.WriteString("  [enter] confirm  [q/esc] back\n")
+	b.WriteString(i18n.T(i18n.KeyPickerBulkFilterKeys))
+	b.WriteString(i18n.T(i18n.KeyPickerBulkFilterFoot))
 	return b.String()
 }
 
 func (m Model) bulkConfirmView() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Delete %d worktrees?\n\n", len(m.bulkTargets))
+	b.WriteString(i18n.T(i18n.KeyPickerBulkConfirmHead, len(m.bulkTargets)))
 	hasDirty := HasDirty(m.infos, m.bulkTargets)
 	hasPrunable := HasPrunable(m.infos, m.bulkTargets)
 	dirtyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
@@ -121,15 +113,12 @@ func (m Model) bulkConfirmView() string {
 		b.WriteString(line)
 	}
 	if hasPrunable {
-		b.WriteString("\nℹ Prunable entries will be cleaned up via `git worktree prune` after the removals.\n")
+		b.WriteString(i18n.T(i18n.KeyPickerBulkPruneNote))
 	}
 	if hasDirty {
-		b.WriteString("\n⚠ Dirty worktrees are included. `git worktree remove --force` is required.\n")
-		b.WriteString("  [y] yes (include dirty, use --force)\n")
-		b.WriteString("  [s] skip dirty (remove clean only)\n")
-		b.WriteString("  [N] cancel\n")
+		b.WriteString(i18n.T(i18n.KeyPickerBulkDirtyWarn))
 	} else {
-		b.WriteString("\nConfirm? [y/N]\n")
+		b.WriteString(i18n.T(i18n.KeyPickerBulkConfirmYN))
 	}
 	return b.String()
 }
