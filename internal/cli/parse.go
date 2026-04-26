@@ -4,8 +4,10 @@ package cli
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/spf13/pflag"
+	"github.com/tqer39/ccw-cli/internal/worktree"
 )
 
 // Flags is the parsed representation of ccw's command-line arguments.
@@ -73,14 +75,13 @@ func validateCleanAll(f *Flags) error {
 		return nil
 	}
 	if f.StatusFilter == "" {
-		f.StatusFilter = "all"
+		f.StatusFilter = worktree.FilterAll
 	}
-	switch f.StatusFilter {
-	case "all", "pushed", "local-only", "dirty":
-	default:
-		return fmt.Errorf("--status: invalid value %q (want all|pushed|local-only|dirty)", f.StatusFilter)
+	if _, ok := worktree.ParseStatusFilter(f.StatusFilter); !ok {
+		return fmt.Errorf("--status: invalid value %q (want %s)",
+			f.StatusFilter, strings.Join(worktree.FilterAllowed(), "|"))
 	}
-	if f.StatusFilter == "dirty" && !f.Force {
+	if f.StatusFilter == worktree.StatusDirty.String() && !f.Force {
 		return fmt.Errorf("--status=dirty requires --force")
 	}
 	return nil

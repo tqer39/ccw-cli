@@ -165,7 +165,7 @@ func runResume(sel picker.Selection, passthrough []string) int {
 }
 
 func launchInPlace(path string, passthrough []string) int {
-	name := worktreeName(path)
+	name := filepath.Base(path)
 	code, err := claude.LaunchInWorktree(path, name, passthrough)
 	if err != nil {
 		ui.Error("%v", err)
@@ -209,7 +209,7 @@ func runCleanAll(mainRepo string, flags cli.Flags, interactive bool) int {
 		return 0
 	}
 
-	filter := statusFilterMap(flags.StatusFilter)
+	filter, _ := worktree.ParseStatusFilter(flags.StatusFilter)
 	targets := picker.SelectByStatus(infos, filter)
 
 	if !flags.Force && picker.HasDirty(infos, targets) {
@@ -257,19 +257,6 @@ func runCleanAll(mainRepo string, flags cli.Flags, interactive bool) int {
 	return applyBulkDelete(mainRepo, bulk)
 }
 
-func statusFilterMap(s string) map[worktree.Status]bool {
-	switch s {
-	case "pushed":
-		return map[worktree.Status]bool{worktree.StatusPushed: true}
-	case "local-only":
-		return map[worktree.Status]bool{worktree.StatusLocalOnly: true}
-	case "dirty":
-		return map[worktree.Status]bool{worktree.StatusDirty: true}
-	default:
-		return nil
-	}
-}
-
 func confirmCleanAll(infos []worktree.Info, targets []int) bool {
 	ui.Info("will remove %d worktree(s):", len(targets))
 	for _, i := range targets {
@@ -302,15 +289,6 @@ func resolveMainRepo() (string, error) {
 		return "", fmt.Errorf("resolve main repo: %w", err)
 	}
 	return mainRepo, nil
-}
-
-func worktreeName(path string) string {
-	for i := len(path) - 1; i >= 0; i-- {
-		if path[i] == '/' {
-			return path[i+1:]
-		}
-	}
-	return path
 }
 
 func runList(flags cli.Flags) int {

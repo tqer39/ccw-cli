@@ -12,17 +12,23 @@ import (
 // BuildNewArgs constructs argv (excluding the program name) for
 // `claude --permission-mode auto --worktree <name> -n <name> [extra...]`.
 func BuildNewArgs(name string, extra []string) []string {
-	args := make([]string, 0, 6+len(extra))
-	args = append(args, "--permission-mode", "auto", "--worktree", name, "-n", name)
-	return append(args, extra...)
+	return buildLaunchArgs(true, name, extra)
 }
 
 // BuildInWorktreeArgs is BuildNewArgs without `--worktree`. Use when cwd is
 // already an existing worktree, since passing `--worktree <name>` from inside
 // a worktree risks a name-collision error against the existing git registration.
 func BuildInWorktreeArgs(name string, extra []string) []string {
-	args := make([]string, 0, 4+len(extra))
-	args = append(args, "--permission-mode", "auto", "-n", name)
+	return buildLaunchArgs(false, name, extra)
+}
+
+func buildLaunchArgs(includeWorktree bool, name string, extra []string) []string {
+	args := make([]string, 0, 6+len(extra))
+	args = append(args, "--permission-mode", "auto")
+	if includeWorktree {
+		args = append(args, "--worktree", name)
+	}
+	args = append(args, "-n", name)
 	return append(args, extra...)
 }
 
