@@ -40,6 +40,8 @@ ccw
 
 ![picker demo](assets/picker-demo.gif)
 
+> **メモ:** `💬 RESUME` バッジは「その worktree に紐づくセッションログがある」ことだけを示します。セッションのタイトルや最初のプロンプトは picker には表示されません。`ccw` は `claude --continue` を実行するだけで、最新セッションの選択は Claude Code CLI 任せです。
+
 ## 📖 使い方
 
 ```bash
