@@ -93,7 +93,6 @@ Without `gh`, the picker stays functional and shows a hint; rate-limit / network
 When ccw creates a new worktree, the worktree directory and the Claude Code session name are kept 1:1:
 
 - Directory: `<repo>/.claude/worktrees/<name>/`
-- Branch: `worktree-<name>`
 - Session name: `<name>` (set via `claude -n <name>`)
 
 `<name>` is generated as `ccw-<owner>-<repo>-<yymmdd>-<hhmmss>` (e.g. `ccw-tqer39-ccw-cli-260426-143055`). `<owner>` / `<repo>` come from the `origin` remote URL; the timestamp is the worktree creation time in your local timezone. When `origin` is unset, `<owner>` becomes `local` and `<repo>` is the directory basename. Duplicate names (e.g. two worktrees created within the same second) are disambiguated with `-2`, `-3`, … Renaming the session manually with `/rename` is fine — ccw does not track it, and `--continue` keys off the working directory so conversation restore is unaffected.
