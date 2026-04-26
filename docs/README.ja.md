@@ -120,6 +120,48 @@ go build -o ~/.local/bin/ccw ~/ccw-cli/cmd/ccw
 - *(optional)* [`gh`](https://cli.github.com/) — picker で PR 情報を表示
 - *(optional)* [superpowers](https://github.com/obra/superpowers) プラグイン — [`.claude/settings.json`](../.claude/settings.json) で宣言済み。本リポジトリで初回 `claude` 起動時にインストールを促されます
 
+## 🪝 新規 worktree セッションでの自動プロンプト注入
+
+本リポジトリには `SessionStart` hook が同梱されており、**新規** Claude Code セッション開始時のみ固定の指示を注入します。`--continue` での resume や `/clear` 後には発火しません。新規 worktree で毎回同じワークフロー（このリポジトリでは brainstorming → writing-plans → executing-plans）に乗せたいときに便利です。
+
+### 仕組み
+
+- [`.claude/hooks/session-start-superpowers.sh`](../.claude/hooks/session-start-superpowers.sh) が `hookSpecificOutput.additionalContext` を含む JSON を stdout に出力し、その内容が Claude の初期コンテキストに追加されます。
+- [`.claude/settings.json`](../.claude/settings.json) で `matcher: "startup"` を指定した `SessionStart` hook として登録しているため、resume / clear では発火しません。
+
+### 他プロジェクトへの転用
+
+1. `.claude/hooks/session-start-<your-name>.sh` のようなスクリプトを置き、以下の形式の JSON を出力するようにします:
+
+   ```json
+   {
+     "hookSpecificOutput": {
+       "hookEventName": "SessionStart",
+       "additionalContext": "<your instruction>"
+     }
+   }
+   ```
+
+2. `chmod +x` で実行権限を付与します。
+3. `.claude/settings.json` に以下を追記します:
+
+   ```json
+   {
+     "hooks": {
+       "SessionStart": [
+         {
+           "matcher": "startup",
+           "hooks": [
+             { "type": "command", "command": ".claude/hooks/session-start-<your-name>.sh" }
+           ]
+         }
+       ]
+     }
+   }
+   ```
+
+実例として本リポジトリの [`.claude/`](../.claude) を参照してください。
+
 ## ⚙️ 環境変数
 
 | 変数 | 効果 |
