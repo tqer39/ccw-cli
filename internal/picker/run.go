@@ -46,7 +46,7 @@ func runTUI(infos []worktree.Info) (Action, Selection, BulkDeletion, error) {
 func runFallback(infos []worktree.Info, in io.Reader, out io.Writer) (Action, Selection, error) {
 	_, _ = fmt.Fprintln(out, i18n.T(i18n.KeyFallbackHeader))
 	for i, w := range infos {
-		_, _ = fmt.Fprint(out, i18n.T(i18n.KeyFallbackLine, i+1, w.Branch, w.Status, fallbackIndicators(w), w.Path))
+		_, _ = fmt.Fprint(out, i18n.T(i18n.KeyFallbackLine, i+1, w.Branch, w.Status, w.Indicators(), w.Path))
 	}
 	_, _ = fmt.Fprintln(out, i18n.T(i18n.KeyFallbackNew))
 	_, _ = fmt.Fprintln(out, i18n.T(i18n.KeyFallbackQuit))
@@ -70,14 +70,4 @@ func runFallback(infos []worktree.Info, in io.Reader, out io.Writer) (Action, Se
 	}
 	w := infos[n-1]
 	return ActionResume, Selection{Path: w.Path, Branch: w.Branch, Status: w.Status, HasSession: w.HasSession}, nil
-}
-
-// fallbackIndicators formats ahead/behind commit counts and dirty file count
-// for the plain-text fallback picker.
-func fallbackIndicators(w worktree.Info) string {
-	out := fmt.Sprintf("↑%d ↓%d", w.AheadCount, w.BehindCount)
-	if w.Status == worktree.StatusDirty && w.DirtyCount > 0 {
-		out += fmt.Sprintf(" ✎%d", w.DirtyCount)
-	}
-	return out
 }

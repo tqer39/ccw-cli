@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"time"
 )
 
 // PRInfo is a minimal projection of `gh pr list` used by the picker.
@@ -98,4 +99,25 @@ func PRStatusWith(r Runner, branches []string) (map[string]PRInfo, error) {
 		result[e.HeadRefName] = PRInfo{Number: e.Number, Title: e.Title, State: e.State}
 	}
 	return result, nil
+}
+
+// PRStatusWithTimeout wraps PRStatusWith with a deadline. The default Runner's
+// gh CLI call does not honor context, so we run it in a goroutine and abandon
+// it on timeout to ensure non-interactive callers cannot hang indefinitely.
+func PRStatusWithTimeout(r Runner, timeout time.Duration, branches []string) (map[string]PRInfo, error) {
+	type result struct {
+		m   map[string]PRInfo
+		err error
+	}
+	ch := make(chan result, 1)
+	go func() {
+		m, err := PRStatusWith(r, branches)
+		ch <- result{m, err}
+	}()
+	select {
+	case res := <-ch:
+		return res.m, res.err
+	case <-time.After(timeout):
+		return nil, fmt.Errorf("gh pr list: timeout after %s", timeout)
+	}
 }

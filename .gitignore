@@ -200,3 +200,4 @@ lefthook-local.yml
 
 # ccw-managed worktrees (the tool's own runtime output)
 .claude/worktrees/
+.claude/settings.local.json

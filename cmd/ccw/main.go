@@ -1,20 +1,23 @@
 // Command ccw launches Claude Code in an isolated git worktree.
 //
-// Phase 3 status: -h / -v / -n / -s and the picker are at parity with the
+// Phase 3 status: -h / -v / -n and the picker are at parity with the
 // bash implementation. The bash `bin/ccw` is kept as a transitional fallback.
 package main
 
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/tqer39/ccw-cli/internal/claude"
 	"github.com/tqer39/ccw-cli/internal/cli"
+	"github.com/tqer39/ccw-cli/internal/gh"
 	"github.com/tqer39/ccw-cli/internal/gitx"
 	"github.com/tqer39/ccw-cli/internal/i18n"
+	"github.com/tqer39/ccw-cli/internal/listmode"
 	"github.com/tqer39/ccw-cli/internal/namegen"
 	"github.com/tqer39/ccw-cli/internal/picker"
-	"github.com/tqer39/ccw-cli/internal/superpowers"
 	"github.com/tqer39/ccw-cli/internal/ui"
 	"github.com/tqer39/ccw-cli/internal/version"
 	"github.com/tqer39/ccw-cli/internal/worktree"
@@ -47,6 +50,10 @@ func main() {
 }
 
 func run(flags cli.Flags) int {
+	if flags.List {
+		return runList(flags)
+	}
+
 	mainRepo, err := resolveMainRepo()
 	if err != nil {
 		return 1
@@ -71,19 +78,13 @@ func run(flags cli.Flags) int {
 	}
 	_ = gitx.SetOriginHead(mainRepo)
 
-	preamble, err := maybeSuperpowers(flags.Superpowers, interactive, flags.AssumeYes)
-	if err != nil {
-		ui.Error("%v", err)
-		return 1
-	}
-
 	if flags.NewWorktree {
 		name, err := namegen.Generate(mainRepo)
 		if err != nil {
 			ui.Error("generate worktree name: %v", err)
 			return 1
 		}
-		code, err := claude.LaunchNew(mainRepo, name, preamble, flags.Passthrough)
+		code, err := claude.LaunchNew(mainRepo, name, flags.Passthrough)
 		if err != nil {
 			ui.Error("%v", err)
 			return 1
@@ -110,7 +111,7 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 				ui.Error("generate worktree name: %v", err)
 				return 1
 			}
-			code, err := claude.LaunchNew(mainRepo, name, "", passthrough)
+			code, err := claude.LaunchNew(mainRepo, name, passthrough)
 			if err != nil {
 				ui.Error("%v", err)
 				return 1
@@ -164,8 +165,8 @@ func runResume(sel picker.Selection, passthrough []string) int {
 }
 
 func launchInPlace(path string, passthrough []string) int {
-	name := worktreeName(path)
-	code, err := claude.LaunchInWorktree(path, name, "", passthrough)
+	name := filepath.Base(path)
+	code, err := claude.LaunchInWorktree(path, name, passthrough)
 	if err != nil {
 		ui.Error("%v", err)
 		return 1
@@ -208,7 +209,7 @@ func runCleanAll(mainRepo string, flags cli.Flags, interactive bool) int {
 		return 0
 	}
 
-	filter := statusFilterMap(flags.StatusFilter)
+	filter, _ := worktree.ParseStatusFilter(flags.StatusFilter)
 	targets := picker.SelectByStatus(infos, filter)
 
 	if !flags.Force && picker.HasDirty(infos, targets) {
@@ -256,19 +257,6 @@ func runCleanAll(mainRepo string, flags cli.Flags, interactive bool) int {
 	return applyBulkDelete(mainRepo, bulk)
 }
 
-func statusFilterMap(s string) map[worktree.Status]bool {
-	switch s {
-	case "pushed":
-		return map[worktree.Status]bool{worktree.StatusPushed: true}
-	case "local-only":
-		return map[worktree.Status]bool{worktree.StatusLocalOnly: true}
-	case "dirty":
-		return map[worktree.Status]bool{worktree.StatusDirty: true}
-	default:
-		return nil
-	}
-}
-
 func confirmCleanAll(infos []worktree.Info, targets []int) bool {
 	ui.Info("will remove %d worktree(s):", len(targets))
 	for _, i := range targets {
@@ -303,25 +291,74 @@ func resolveMainRepo() (string, error) {
 	return mainRepo, nil
 }
 
-func worktreeName(path string) string {
-	for i := len(path) - 1; i >= 0; i-- {
-		if path[i] == '/' {
-			return path[i+1:]
+func runList(flags cli.Flags) int {
+	startDir := flags.TargetDir
+	if startDir == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			ui.Error("getwd: %v", err)
+			return 1
 		}
+		startDir = cwd
 	}
-	return path
+
+	if err := gitx.RequireRepo(startDir); err != nil {
+		ui.Error("ccw -L: not a git repository: %s", startDir)
+		return 1
+	}
+	mainRepo, err := gitx.ResolveMainRepo(startDir)
+	if err != nil {
+		ui.Error("ccw -L: resolve main repo: %v", err)
+		return 2
+	}
+
+	b := listmode.Builder{
+		ListWorktrees: worktree.List,
+		ResolveRepo:   resolveListRepo,
+		FetchPRs: func(branches []string) (map[string]gh.PRInfo, error) {
+			return gh.PRStatusWithTimeout(gh.DefaultRunner{}, 5*time.Second, branches)
+		},
+		GhAvailable: gh.Available,
+	}
+
+	out, warns, err := b.Build(mainRepo, listmode.Options{NoPR: flags.NoPR, NoSession: flags.NoSession})
+	if err != nil {
+		ui.Error("ccw -L: %v", err)
+		return 2
+	}
+	for _, w := range warns {
+		ui.Warn("%s", w.Message)
+	}
+	if flags.JSON {
+		if err := listmode.RenderJSON(out, os.Stdout); err != nil {
+			ui.Error("render json: %v", err)
+			return 2
+		}
+		return 0
+	}
+	if err := listmode.RenderText(out, os.Stdout); err != nil {
+		ui.Error("render text: %v", err)
+		return 2
+	}
+	return 0
 }
 
-func maybeSuperpowers(enabled bool, interactive, assumeYes bool) (string, error) {
-	if !enabled {
-		return "", nil
+func resolveListRepo(mainRepo string) (listmode.RepoInfo, error) {
+	repo := listmode.RepoInfo{MainPath: mainRepo}
+	if rawURL, err := gitx.OriginURL(mainRepo); err == nil && rawURL != "" {
+		if owner, name, err := gitx.ParseOriginURL(rawURL); err == nil {
+			repo.Owner = owner
+			repo.Name = name
+		}
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("resolve HOME: %w", err)
+	if repo.Owner == "" {
+		repo.Owner = "local"
 	}
-	if err := superpowers.EnsureInstalled(os.Stdin, os.Stderr, home, interactive, assumeYes); err != nil {
-		return "", fmt.Errorf("superpowers install: %w", err)
+	if repo.Name == "" {
+		repo.Name = filepath.Base(mainRepo)
 	}
-	return superpowers.Preamble(), nil
+	if db, err := gitx.DefaultBranch(mainRepo); err == nil {
+		repo.DefaultBranch = db
+	}
+	return repo, nil
 }

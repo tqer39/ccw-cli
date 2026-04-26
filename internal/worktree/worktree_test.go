@@ -182,6 +182,104 @@ func TestList_PrunableEntryDoesNotTouchDisk(t *testing.T) {
 	}
 }
 
+func TestList_PopulatesCommitAndCreatedAt(t *testing.T) {
+	main := initMainRepo(t)
+	addWorktree(t, main, "newfields")
+
+	infos, err := List(main)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(infos) == 0 {
+		t.Fatal("expected at least one worktree")
+	}
+	w := infos[0]
+	if w.Status == StatusPrunable {
+		t.Fatalf("setup invariant: worktree should not be prunable")
+	}
+	if w.CreatedAt == nil {
+		t.Errorf("CreatedAt is nil for non-prunable entry")
+	}
+	if w.LastCommit == nil {
+		t.Errorf("LastCommit is nil for non-prunable entry")
+	} else if len(w.LastCommit.SHA) != 7 {
+		t.Errorf("LastCommit.SHA len = %d, want 7", len(w.LastCommit.SHA))
+	}
+}
+
+func TestList_SessionPathMatchesHasSession(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	main := initMainRepo(t)
+	wt := addWorktree(t, main, "withsession")
+	wtResolved, err := filepath.EvalSymlinks(wt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Join(home, ".claude", "projects", EncodeProjectPath(wtResolved))
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	logPath := filepath.Join(dir, "abc.jsonl")
+	if err := os.WriteFile(logPath, []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	infos, err := List(main)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, w := range infos {
+		if w.Path != wtResolved {
+			continue
+		}
+		found = true
+		if !w.HasSession {
+			t.Error("HasSession = false, want true")
+		}
+		if w.SessionPath != logPath {
+			t.Errorf("SessionPath = %q, want %q", w.SessionPath, logPath)
+		}
+	}
+	if !found {
+		t.Fatalf("worktree %s not in List output", wtResolved)
+	}
+}
+
+func TestList_PrunableLeavesNewFieldsZero(t *testing.T) {
+	main := initMainRepo(t)
+	wt := addWorktree(t, main, "prunablenew")
+	if err := os.RemoveAll(wt); err != nil {
+		t.Fatal(err)
+	}
+
+	infos, err := List(main)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, w := range infos {
+		if w.Status != StatusPrunable {
+			continue
+		}
+		found = true
+		if w.CreatedAt != nil {
+			t.Errorf("CreatedAt = %v on prunable, want nil", w.CreatedAt)
+		}
+		if w.LastCommit != nil {
+			t.Errorf("LastCommit = %v on prunable, want nil", w.LastCommit)
+		}
+		if w.SessionPath != "" {
+			t.Errorf("SessionPath = %q, want empty", w.SessionPath)
+		}
+	}
+	if !found {
+		t.Fatal("no prunable worktree in fixture")
+	}
+}
+
 func TestList_PopulatesHasSession(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
