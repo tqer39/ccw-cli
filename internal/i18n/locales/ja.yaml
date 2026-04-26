@@ -7,6 +7,8 @@ tip:
   cleanAll: "--clean-all で push 済み worktree を一括削除できます"
   passthrough: "ccw -- --model <id> のように -- 以降は claude にそのまま渡されます"
   resumeBadge: "RESUME バッジは ~/.claude/projects/ から判定しています"
+  statusBadge: "Status: PUSHED=push 済 / LOCAL=未 push / DIRTY=未コミット"
+  prBadge: "PR: OPEN / DRAFT / MERGED / CLOSED を gh pr list から色分け"
 
 help:
   usage: |

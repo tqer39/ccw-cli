@@ -22,6 +22,8 @@ const (
 	KeyTipCleanAll    Key = "tip.cleanAll"
 	KeyTipPassthrough Key = "tip.passthrough"
 	KeyTipResumeBadge Key = "tip.resumeBadge"
+	KeyTipStatusBadge Key = "tip.statusBadge"
+	KeyTipPRBadge     Key = "tip.prBadge"
 
 	KeyHelpUsage Key = "help.usage"
 
@@ -61,6 +63,7 @@ const (
 func AllKeys() []Key {
 	return []Key{
 		KeyTipRename, KeyTipFromPR, KeyTipCleanAll, KeyTipPassthrough, KeyTipResumeBadge,
+		KeyTipStatusBadge, KeyTipPRBadge,
 		KeyHelpUsage,
 		KeyPickerFooterInstallGh, KeyPickerFooterTip,
 		KeyPickerActionMenu,
