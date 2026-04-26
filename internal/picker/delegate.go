@@ -3,6 +3,7 @@ package picker
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 
 	"charm.land/bubbles/v2/list"
@@ -41,17 +42,12 @@ func renderRow(li listItem, width int, prUnavailable bool, selected bool) string
 		return prefix + li.title + "\n  " + li.desc
 	}
 	wt := li.wt
-	name := worktreeName(wt.Path)
+	name := filepath.Base(wt.Path)
 	resume := ResumeBadge(wt.HasSession)
 	status := Badge(wt.Status)
-	var indicators string
-	switch wt.Status {
-	case worktree.StatusPrunable:
+	indicators := wt.Indicators()
+	if wt.Status == worktree.StatusPrunable {
 		indicators = "(missing on disk)"
-	case worktree.StatusDirty:
-		indicators = fmt.Sprintf("↑%d ↓%d ✎%d", wt.AheadCount, wt.BehindCount, wt.DirtyCount)
-	default:
-		indicators = fmt.Sprintf("↑%d ↓%d", wt.AheadCount, wt.BehindCount)
 	}
 
 	header := fmt.Sprintf("%s%s · %s", prefix, resume, name)
@@ -88,14 +84,6 @@ func padBetween(left, right string, width int) string {
 		gap = 2
 	}
 	return left + strings.Repeat(" ", gap) + right
-}
-
-func worktreeName(path string) string {
-	idx := strings.LastIndex(path, "/")
-	if idx < 0 {
-		return path
-	}
-	return path[idx+1:]
 }
 
 // renderPRCell builds the PR portion of the row: either a state-tinted
