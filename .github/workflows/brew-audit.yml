@@ -1,0 +1,36 @@
+name: brew-audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # 毎週月曜 09:00 JST = 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - name: Show Homebrew version
+        run: brew --version
+
+      - name: Tap tqer39/homebrew-tap
+        run: brew tap tqer39/tap
+
+      - name: Audit formula (strict + online)
+        run: brew audit --strict --online tqer39/tap/ccw
+
+      - name: Install from source
+        run: brew install --build-from-source tqer39/tap/ccw
+
+      - name: Run formula test block
+        run: brew test tqer39/tap/ccw
+
+      - name: Show installed binary version
+        run: ccw -v
