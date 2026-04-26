@@ -113,7 +113,7 @@ jobs:
       - name: Run cspell
         run: |
           npm exec -y --package=cspell -- cspell lint \
-            --no-progress --config .cspell/cspell.json \
+            --no-progress --dot --config .cspell/cspell.json \
             "**/*"
 
   workflow-result:
