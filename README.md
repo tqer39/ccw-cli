@@ -57,7 +57,7 @@ ccw --clean-all --force -y                # nuke everything without prompt
 
 Run `ccw --help` for the full flag reference.
 
-### Worktree picker
+## 🎯 Picker reference
 
 Worktree status badge:
 
@@ -87,7 +87,7 @@ Selecting a worktree opens `[r] run` / `[d] delete` / `[b] back`. `run` calls `c
 
 Without `gh`, the picker stays functional and shows a hint; rate-limit / network failures hide the PR column silently.
 
-### Naming convention
+## 🏷️ Naming
 
 When ccw creates a new worktree, the worktree directory and the Claude Code session name are kept 1:1:
 
