@@ -18,6 +18,9 @@ func TestPreamble_JA(t *testing.T) {
 	if !strings.Contains(got, "superpowers:brainstorming") {
 		t.Errorf("ja preamble missing brainstorming step: %q", got)
 	}
+	if !strings.Contains(got, "/reload-plugins") {
+		t.Errorf("ja preamble missing /reload-plugins fallback: %q", got)
+	}
 }
 
 func TestPreamble_EN(t *testing.T) {
@@ -30,6 +33,9 @@ func TestPreamble_EN(t *testing.T) {
 	}
 	if !strings.Contains(got, "superpowers:brainstorming") {
 		t.Errorf("en preamble missing brainstorming step: %q", got)
+	}
+	if !strings.Contains(got, "/reload-plugins") {
+		t.Errorf("en preamble missing /reload-plugins fallback: %q", got)
 	}
 }
 

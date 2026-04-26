@@ -103,3 +103,7 @@ fallback:
   new: "  n) new"
   quit: "  q) quit"
   prompt: "#? "
+
+superpowers:
+  warn:
+    pluginDirNotFound: "Could not resolve the superpowers plugin path. If skills are not yet loaded, run /reload-plugins inside Claude Code."

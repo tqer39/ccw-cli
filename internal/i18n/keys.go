@@ -52,6 +52,8 @@ const (
 	KeyFallbackNew    Key = "fallback.new"
 	KeyFallbackQuit   Key = "fallback.quit"
 	KeyFallbackPrompt Key = "fallback.prompt"
+
+	KeySuperpowersPluginDirNotFound Key = "superpowers.warn.pluginDirNotFound"
 )
 
 // AllKeys returns every translation Key constant. Used by the parity test to
@@ -67,5 +69,6 @@ func AllKeys() []Key {
 		KeyPickerBulkFilterHead, KeyPickerBulkFilterLine, KeyPickerBulkFilterKeys, KeyPickerBulkFilterFoot,
 		KeyPickerBulkConfirmHead, KeyPickerBulkPruneNote, KeyPickerBulkDirtyWarn, KeyPickerBulkConfirmYN,
 		KeyFallbackHeader, KeyFallbackLine, KeyFallbackNew, KeyFallbackQuit, KeyFallbackPrompt,
+		KeySuperpowersPluginDirNotFound,
 	}
 }

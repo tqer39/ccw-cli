@@ -103,3 +103,7 @@ fallback:
   new: "  n) 新規"
   quit: "  q) 終了"
   prompt: "#? "
+
+superpowers:
+  warn:
+    pluginDirNotFound: "superpowers プラグインのパスを解決できませんでした。skill が読み込まれていない場合は Claude Code 内で /reload-plugins を実行してください。"
