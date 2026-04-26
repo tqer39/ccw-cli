@@ -44,6 +44,19 @@ git -C /tmp/ccw-demo worktree add -q -b feat/picker .claude/worktrees/feat-picke
 git -C /tmp/ccw-demo worktree add -q -b chore/cleanup .claude/worktrees/chore-cleanup
 (cd /tmp/ccw-demo/.claude/worktrees/chore-cleanup && echo untracked >stray.txt && echo more >extra.md)
 
+# 3.1 sanity-check: chore/cleanup must be DIRTY and no worktree may be prunable.
+# Both invariants are required for the demo GIF to render the expected badges
+# ([DIRTY] for chore-cleanup, no `(missing on disk)` lines anywhere).
+chore_status=$(cd /tmp/ccw-demo/.claude/worktrees/chore-cleanup && git status --porcelain)
+if [ -z "$chore_status" ]; then
+  echo "picker-demo-setup: chore/cleanup is unexpectedly clean — abort." >&2
+  exit 1
+fi
+if git -C /tmp/ccw-demo worktree list --porcelain | grep -q '^prunable'; then
+  echo "picker-demo-setup: a worktree is prunable — abort." >&2
+  exit 1
+fi
+
 # 4. mock gh that returns canned PR rows covering every PR state
 mkdir -p /tmp/fake-gh
 cat >/tmp/fake-gh/gh <<'GH'
