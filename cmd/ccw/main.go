@@ -84,7 +84,7 @@ func run(flags cli.Flags) int {
 			ui.Error("generate worktree name: %v", err)
 			return 1
 		}
-		code, err := claude.LaunchNew(mainRepo, name, "", flags.Passthrough)
+		code, err := claude.LaunchNew(mainRepo, name, flags.Passthrough)
 		if err != nil {
 			ui.Error("%v", err)
 			return 1
@@ -111,7 +111,7 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 				ui.Error("generate worktree name: %v", err)
 				return 1
 			}
-			code, err := claude.LaunchNew(mainRepo, name, "", passthrough)
+			code, err := claude.LaunchNew(mainRepo, name, passthrough)
 			if err != nil {
 				ui.Error("%v", err)
 				return 1
@@ -166,7 +166,7 @@ func runResume(sel picker.Selection, passthrough []string) int {
 
 func launchInPlace(path string, passthrough []string) int {
 	name := worktreeName(path)
-	code, err := claude.LaunchInWorktree(path, name, "", passthrough)
+	code, err := claude.LaunchInWorktree(path, name, passthrough)
 	if err != nil {
 		ui.Error("%v", err)
 		return 1
