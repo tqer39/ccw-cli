@@ -33,7 +33,6 @@ That's it. `ccw` scans `.claude/worktrees/` and shows the picker, or spins up a 
 - 🧭 **Works from anywhere in the repo** — run `ccw` inside a worktree or subdirectory; ccw resolves the main repo automatically
 - 🎯 **Worktree state at a glance** — pushed / ahead / behind / dirty, plus PR info, all in one picker
 - 🧹 **Bulk cleanup** — `[clean pushed]` or `ccw --clean-all` sweeps the worktrees you're done with
-- 🦸 **"Design first" startup** — `-s` tells claude to follow the brainstorming → writing-plans → executing-plans flow (prompts to install the superpowers plugin if missing)
 - ➡️ **claude flags pass through** — anything after `--` goes to claude untouched, so `--model` and friends still work
 - 📋 **Machine-readable list** — `ccw -L --json` aggregates worktree × git × PR × session info in one shot, ideal for scripts and Claude Code agent use
 
@@ -46,7 +45,6 @@ That's it. `ccw` scans `.claude/worktrees/` and shows the picker, or spins up a 
 ```bash
 ccw                                       # pick an existing worktree, or start fresh
 ccw -n                                    # new worktree, skip picker
-ccw -s                                    # new worktree + superpowers preamble
 ccw -- --model <model-id>                 # pass-through: any flags after `--` go to claude verbatim
 ccw -L                                    # list ccw worktrees (text table)
 ccw -L --json                             # same, JSON for scripts / agents
@@ -119,7 +117,7 @@ Make sure `~/.local/bin` is on your `PATH`.
 - [`git`](https://git-scm.com/)
 - [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.76` — ccw uses `--worktree <name>` (added in 2.1.49) together with `-n <name>` (added in 2.1.76). ccw offers to install `claude` via npm / brew if missing.
 - *(optional)* [`gh`](https://cli.github.com/) — enables PR info in the picker
-- *(optional)* [superpowers](https://github.com/obra/superpowers) plugin — auto-checked when `-s` is used
+- *(optional)* [superpowers](https://github.com/obra/superpowers) plugin — declared in [`.claude/settings.json`](./.claude/settings.json) so Claude Code prompts to install it on first launch in this repo
 
 ## ⚙️ Environment
 

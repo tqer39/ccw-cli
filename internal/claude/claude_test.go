@@ -6,7 +6,7 @@ import (
 )
 
 func TestBuildNewArgs_NameOnly(t *testing.T) {
-	got := BuildNewArgs("foo", "", nil)
+	got := BuildNewArgs("foo", nil)
 	want := []string{"--permission-mode", "auto", "--worktree", "foo", "-n", "foo"}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("BuildNewArgs:\n got  = %v\n want = %v", got, want)
@@ -14,42 +14,26 @@ func TestBuildNewArgs_NameOnly(t *testing.T) {
 }
 
 func TestBuildNewArgs_WithExtra(t *testing.T) {
-	got := BuildNewArgs("foo", "", []string{"--model", "claude-opus-4-7"})
+	got := BuildNewArgs("foo", []string{"--model", "claude-opus-4-7"})
 	want := []string{"--permission-mode", "auto", "--worktree", "foo", "-n", "foo", "--model", "claude-opus-4-7"}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("BuildNewArgs extra:\n got  = %v\n want = %v", got, want)
 	}
 }
 
-func TestBuildNewArgs_WithPreamble(t *testing.T) {
-	got := BuildNewArgs("foo", "hello", nil)
-	want := []string{"--permission-mode", "auto", "--worktree", "foo", "-n", "foo", "--", "hello"}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("BuildNewArgs preamble:\n got  = %v\n want = %v", got, want)
-	}
-}
-
-func TestBuildNewArgs_WithExtraAndPreamble(t *testing.T) {
-	got := BuildNewArgs("foo", "hi", []string{"--model", "x"})
-	want := []string{"--permission-mode", "auto", "--worktree", "foo", "-n", "foo", "--model", "x", "--", "hi"}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("BuildNewArgs both:\n got  = %v\n want = %v", got, want)
-	}
-}
-
 func TestBuildInWorktreeArgs_NameOnly(t *testing.T) {
-	got := BuildInWorktreeArgs("foo", "", nil)
+	got := BuildInWorktreeArgs("foo", nil)
 	want := []string{"--permission-mode", "auto", "-n", "foo"}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("BuildInWorktreeArgs:\n got  = %v\n want = %v", got, want)
 	}
 }
 
-func TestBuildInWorktreeArgs_WithExtraAndPreamble(t *testing.T) {
-	got := BuildInWorktreeArgs("foo", "hi", []string{"--model", "x"})
-	want := []string{"--permission-mode", "auto", "-n", "foo", "--model", "x", "--", "hi"}
+func TestBuildInWorktreeArgs_WithExtra(t *testing.T) {
+	got := BuildInWorktreeArgs("foo", []string{"--model", "x"})
+	want := []string{"--permission-mode", "auto", "-n", "foo", "--model", "x"}
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("BuildInWorktreeArgs both:\n got  = %v\n want = %v", got, want)
+		t.Errorf("BuildInWorktreeArgs extra:\n got  = %v\n want = %v", got, want)
 	}
 }
 
