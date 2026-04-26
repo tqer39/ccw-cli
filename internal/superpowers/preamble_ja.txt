@@ -1,3 +1,5 @@
+/superpowers:brainstorming
+
 このセッションは Claude Code の --worktree sandbox 内です。
 superpowers:brainstorming → superpowers:writing-plans → superpowers:executing-plans
 の順で進めてください。トピックはこれから相談します。

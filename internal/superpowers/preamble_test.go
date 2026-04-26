@@ -9,6 +9,9 @@ import (
 
 func TestPreamble_JA(t *testing.T) {
 	got := Preamble(i18n.LangJA)
+	if !strings.HasPrefix(got, "/superpowers:brainstorming\n") {
+		t.Errorf("ja preamble must start with /superpowers:brainstorming slash command: %q", got)
+	}
 	if !strings.Contains(got, "sandbox") {
 		t.Errorf("ja preamble missing 'sandbox': %q", got)
 	}
@@ -25,6 +28,9 @@ func TestPreamble_JA(t *testing.T) {
 
 func TestPreamble_EN(t *testing.T) {
 	got := Preamble(i18n.LangEN)
+	if !strings.HasPrefix(got, "/superpowers:brainstorming\n") {
+		t.Errorf("en preamble must start with /superpowers:brainstorming slash command: %q", got)
+	}
 	if !strings.Contains(got, "sandbox") {
 		t.Errorf("en preamble missing 'sandbox': %q", got)
 	}

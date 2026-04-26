@@ -1,3 +1,5 @@
+/superpowers:brainstorming
+
 You are inside a Claude Code --worktree sandbox.
 Proceed in this order: superpowers:brainstorming → superpowers:writing-plans → superpowers:executing-plans.
 The topic will follow.
