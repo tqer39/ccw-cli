@@ -76,4 +76,4 @@ brews:
     install: |
       bin.install "ccw"
     test: |
-      system "#{bin}/ccw", "-v"
+      system bin/"ccw", "-v"
