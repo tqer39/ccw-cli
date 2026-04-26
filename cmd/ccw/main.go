@@ -80,6 +80,7 @@ func run(flags cli.Flags) int {
 	_ = gitx.SetOriginHead(mainRepo)
 
 	preamble := maybePreamble(flags.Superpowers)
+	passthrough := withPluginDir(flags.Superpowers, flags.Passthrough)
 
 	if flags.NewWorktree {
 		name, err := namegen.Generate(mainRepo)
@@ -87,7 +88,7 @@ func run(flags cli.Flags) int {
 			ui.Error("generate worktree name: %v", err)
 			return 1
 		}
-		code, err := claude.LaunchNew(mainRepo, name, preamble, flags.Passthrough)
+		code, err := claude.LaunchNew(mainRepo, name, preamble, passthrough)
 		if err != nil {
 			ui.Error("%v", err)
 			return 1
@@ -105,6 +106,25 @@ func maybePreamble(enabled bool) string {
 		return ""
 	}
 	return superpowers.Preamble(i18n.Current())
+}
+
+// withPluginDir prepends `--plugin-dir <path>` to passthrough when -s was
+// passed and the superpowers plugin can be resolved on disk. When resolution
+// fails it emits a warning and returns passthrough unchanged so the preamble
+// still reaches Claude.
+func withPluginDir(enabled bool, passthrough []string) []string {
+	if !enabled {
+		return passthrough
+	}
+	dir, ok := superpowers.ResolvePluginDir()
+	if !ok {
+		ui.Warn("%s", i18n.T(i18n.KeySuperpowersPluginDirNotFound))
+		return passthrough
+	}
+	out := make([]string, 0, len(passthrough)+2)
+	out = append(out, "--plugin-dir", dir)
+	out = append(out, passthrough...)
+	return out
 }
 
 func runPicker(mainRepo string, passthrough []string, interactive bool) int {
