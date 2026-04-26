@@ -119,7 +119,7 @@ Make sure `~/.local/bin` is on your `PATH`.
 - [`git`](https://git-scm.com/)
 - [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.76` — ccw uses `--worktree <name>` (added in 2.1.49) together with `-n <name>` (added in 2.1.76). ccw offers to install `claude` via npm / brew if missing.
 - *(optional)* [`gh`](https://cli.github.com/) — enables PR info in the picker
-- *(optional)* [superpowers](https://github.com/obra/superpowers) plugin — declared in [`.claude/settings.json`](./.claude/settings.json) so Claude Code prompts to install it on first launch in this repo
+- *(optional)* [superpowers](https://github.com/obra/superpowers) plugin — only relevant when launching with `-s` (which injects the localized superpowers preamble). Declared in [`.claude/settings.json`](./.claude/settings.json) so Claude Code prompts to install it on first launch in this repo
 
 ## ⚙️ Environment
 
