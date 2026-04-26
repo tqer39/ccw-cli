@@ -8,6 +8,7 @@
 [![Release](https://img.shields.io/github/v/release/tqer39/ccw-cli?logo=github)](https://github.com/tqer39/ccw-cli/releases)
 [![License](https://img.shields.io/github/license/tqer39/ccw-cli)](LICENSE)
 [![Homebrew](https://img.shields.io/badge/brew-tqer39%2Ftap%2Fccw-FBB040?logo=homebrew&logoColor=white)](https://github.com/tqer39/homebrew-tap)
+[![brew-audit](https://github.com/tqer39/ccw-cli/actions/workflows/brew-audit.yml/badge.svg)](https://github.com/tqer39/ccw-cli/actions/workflows/brew-audit.yml)
 
 [🇺🇸 English](README.md) · [🇯🇵 日本語](docs/README.ja.md)
 
