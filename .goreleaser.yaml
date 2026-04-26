@@ -76,4 +76,5 @@ brews:
     install: |
       bin.install "ccw"
     test: |
-      system bin/"ccw", "-v"
+      assert_match version.to_s, shell_output("#{bin}/ccw -v")
+      system bin/"ccw", "-h"
