@@ -40,7 +40,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.out
@@ -102,8 +102,22 @@ jobs:
       - name: Run bats
         run: bats tests/
 
+  cspell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 'lts/*'
+      - name: Run cspell
+        run: |
+          npm exec -y --package=cspell -- cspell lint \
+            --no-progress --config .cspell/cspell.json \
+            "**/*"
+
   workflow-result:
-    needs: [go-lint, go-test, go-build, shellcheck, shfmt, bats]
+    needs: [go-lint, go-test, go-build, shellcheck, shfmt, bats, cspell]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -132,6 +146,10 @@ jobs:
           fi
           if [ "${{ needs.bats.result }}" != "success" ]; then
             echo "bats failed: ${{ needs.bats.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.cspell.result }}" != "success" ]; then
+            echo "cspell failed: ${{ needs.cspell.result }}"
             exit 1
           fi
           echo "All jobs completed successfully"
