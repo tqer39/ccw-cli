@@ -195,6 +195,32 @@ func TestRenderRow_HeaderHasNoLargeRightPadding(t *testing.T) {
 	}
 }
 
+func TestRenderRow_PrunableShowsMissingOnDisk(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	li := listItem{
+		tag: tagWorktree,
+		wt: &worktree.Info{
+			Path:        "/repo/.claude/worktrees/stale",
+			Branch:      "stale/feature",
+			Status:      worktree.StatusPrunable,
+			AheadCount:  3,
+			BehindCount: 2,
+			DirtyCount:  7,
+			HasSession:  true,
+		},
+	}
+	got := renderRow(li, 120, true, false)
+	header := strings.SplitN(got, "\n", 2)[0]
+	if !strings.Contains(header, "(missing on disk)") {
+		t.Errorf("prunable header should contain (missing on disk):\n%s", header)
+	}
+	for _, unwanted := range []string{"[prune]", "[pushed]", "[dirty]", "[local]", "↑3", "↓2", "✎7"} {
+		if strings.Contains(header, unwanted) {
+			t.Errorf("prunable header should not contain %q:\n%s", unwanted, header)
+		}
+	}
+}
+
 func TestRenderRow_RightMargin(t *testing.T) {
 	t.Setenv("NO_COLOR", "1")
 	li := listItem{
