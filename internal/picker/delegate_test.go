@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"charm.land/lipgloss/v2"
 	"github.com/tqer39/ccw-cli/internal/gh"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
@@ -23,18 +24,24 @@ func TestRenderRow_ResumeBadge(t *testing.T) {
 	if !strings.Contains(got, "[RESUME]") {
 		t.Errorf("missing RESUME badge:\n%s", got)
 	}
-	if !strings.Contains(got, "foo") {
-		t.Errorf("missing worktree name foo:\n%s", got)
+	if !strings.Contains(got, "🌲 foo") {
+		t.Errorf("missing tree icon + worktree name '🌲 foo':\n%s", got)
 	}
 	if !strings.Contains(got, "branch:  feature/auth") {
 		t.Errorf("missing branch line:\n%s", got)
 	}
-	if !strings.Contains(got, "path:    /repo/.claude/worktrees/foo") {
-		t.Errorf("missing path line:\n%s", got)
+	if strings.Contains(got, "path:") {
+		t.Errorf("path: line should be removed:\n%s", got)
 	}
 	lines := strings.Split(strings.TrimRight(got, "\n"), "\n")
-	if len(lines) != 4 {
-		t.Errorf("got %d lines, want 4:\n%s", len(lines), got)
+	if len(lines) != 3 {
+		t.Errorf("got %d lines, want 3:\n%s", len(lines), got)
+	}
+}
+
+func TestRowDelegateHeight(t *testing.T) {
+	if got := (rowDelegate{}).Height(); got != 3 {
+		t.Errorf("rowDelegate.Height() = %d, want 3", got)
 	}
 }
 
@@ -141,5 +148,29 @@ func TestRenderRow_PRUnavailableHidesPRContent(t *testing.T) {
 	// pr line still appears as label, but the cell is empty
 	if !strings.Contains(got, "pr:") {
 		t.Errorf("pr: label should still appear:\n%s", got)
+	}
+}
+
+func TestRenderRow_RightMargin(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	li := listItem{
+		tag: tagWorktree,
+		wt: &worktree.Info{
+			Path:        "/repo/.claude/worktrees/foo",
+			Branch:      "feature/right-margin",
+			Status:      worktree.StatusLocalOnly,
+			AheadCount:  0,
+			BehindCount: 0,
+		},
+	}
+	const width = 80
+	const margin = 4
+	got := renderRow(li, width, true, false)
+	lines := strings.Split(strings.TrimRight(got, "\n"), "\n")
+	for i, line := range lines {
+		if w := lipgloss.Width(line); w > width-margin {
+			t.Errorf("line %d has visible width %d > %d (width %d - margin %d):\n%s",
+				i, w, width-margin, width, margin, line)
+		}
 	}
 }

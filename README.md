@@ -40,6 +40,8 @@ That's it. `ccw` scans `.claude/worktrees/` and shows the picker, or spins up a 
 
 ![picker demo](docs/assets/picker-demo.gif)
 
+> **Note:** the `💬 RESUME` badge only signals that a session log exists for the worktree. The session title or first prompt is **not** previewed in the picker — `ccw` simply runs `claude --continue` and lets the Claude Code CLI pick the most recent session.
+
 ## 📖 Usage
 
 ```bash
