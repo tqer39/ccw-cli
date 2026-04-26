@@ -14,6 +14,7 @@ help:
 
     Options:
       -n, --new            Always start a new worktree (skip picker)
+      -s, --superpowers    Inject the localized superpowers preamble as the first prompt (implies --new)
       -v, --version        Show version
       -h, --help           Show this help
           --lang=<en|ja>   Force output language (overrides CCW_LANG and locale)

@@ -14,6 +14,7 @@ help:
 
     オプション:
       -n, --new            常に新しい worktree で開始 (picker をスキップ)
+      -s, --superpowers    superpowers の preamble を最初のプロンプトとして注入 (--new を含意)
       -v, --version        バージョン表示
       -h, --help           このヘルプを表示
           --lang=<en|ja>   出力言語を強制 (CCW_LANG・locale より優先)

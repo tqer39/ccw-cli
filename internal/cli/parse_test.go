@@ -2,6 +2,7 @@ package cli
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -112,6 +113,21 @@ func TestParse_Table(t *testing.T) {
 			argv: []string{"--clean-all", "--dry-run", "-y"},
 			want: Flags{CleanAll: true, StatusFilter: "all", DryRun: true, AssumeYes: true},
 		},
+		{
+			name: "short superpowers implies new",
+			argv: []string{"-s"},
+			want: Flags{Superpowers: true, NewWorktree: true},
+		},
+		{
+			name: "long superpowers implies new",
+			argv: []string{"--superpowers"},
+			want: Flags{Superpowers: true, NewWorktree: true},
+		},
+		{
+			name: "superpowers with passthrough",
+			argv: []string{"-s", "--", "--model", "x"},
+			want: Flags{Superpowers: true, NewWorktree: true, Passthrough: []string{"--model", "x"}},
+		},
 	}
 
 	for _, tc := range cases {
@@ -192,6 +208,16 @@ func TestParse_ListWithCleanAllIsExclusive(t *testing.T) {
 func TestParse_ListWithPassthroughIsExclusive(t *testing.T) {
 	if _, err := Parse([]string{"-L", "--", "--model", "x"}); err == nil {
 		t.Fatal("want error: -L with -- passthrough")
+	}
+}
+
+func TestParse_ListWithSuperpowersIsExclusive(t *testing.T) {
+	_, err := Parse([]string{"-L", "-s"})
+	if err == nil {
+		t.Fatal("want error: -L with -s")
+	}
+	if !strings.Contains(err.Error(), "--superpowers") {
+		t.Errorf("want error mentioning --superpowers, got: %v", err)
 	}
 }
 

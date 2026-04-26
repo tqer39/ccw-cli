@@ -47,6 +47,7 @@ ccw
 ```bash
 ccw                                       # 既存 worktree を選ぶか、新規起動
 ccw -n                                    # picker をスキップして新規作成
+ccw -s                                    # 新規 worktree + ローカライズされた superpowers preamble を最初のプロンプトとして注入
 ccw -- --model <model-id>                 # パススルー: `--` 以降の引数はそのまま claude に渡す（モデル ID は一例）
 ccw -L                                    # ccw worktree を表形式で一覧
 ccw -L --json                             # 同上、JSON 出力（スクリプト・エージェント用）
@@ -120,48 +121,6 @@ go build -o ~/.local/bin/ccw ~/ccw-cli/cmd/ccw
 - [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.76` — ccw は `--worktree <name>` (2.1.49 で追加) と `-n <name>` (2.1.76 で追加) を併用します。未導入なら起動時に npm / brew で入れるかを確認します。
 - *(optional)* [`gh`](https://cli.github.com/) — picker で PR 情報を表示
 - *(optional)* [superpowers](https://github.com/obra/superpowers) プラグイン — [`.claude/settings.json`](../.claude/settings.json) で宣言済み。本リポジトリで初回 `claude` 起動時にインストールを促されます
-
-## 🪝 新規 worktree セッションでの自動プロンプト注入
-
-本リポジトリには `SessionStart` hook が同梱されており、**新規** Claude Code セッション開始時のみ固定の指示を注入します。`--continue` での resume や `/clear` 後には発火しません。新規 worktree で毎回同じワークフロー（このリポジトリでは brainstorming → writing-plans → executing-plans）に乗せたいときに便利です。
-
-### 仕組み
-
-- [`.claude/hooks/session-start-superpowers.sh`](../.claude/hooks/session-start-superpowers.sh) が `hookSpecificOutput.additionalContext` を含む JSON を stdout に出力し、その内容が Claude の初期コンテキストに追加されます。
-- [`.claude/settings.json`](../.claude/settings.json) で `matcher: "startup"` を指定した `SessionStart` hook として登録しているため、resume / clear では発火しません。
-
-### 他プロジェクトへの転用
-
-1. `.claude/hooks/session-start-<your-name>.sh` のようなスクリプトを置き、以下の形式の JSON を出力するようにします:
-
-   ```json
-   {
-     "hookSpecificOutput": {
-       "hookEventName": "SessionStart",
-       "additionalContext": "<your instruction>"
-     }
-   }
-   ```
-
-2. `chmod +x` で実行権限を付与します。
-3. `.claude/settings.json` に以下を追記します:
-
-   ```json
-   {
-     "hooks": {
-       "SessionStart": [
-         {
-           "matcher": "startup",
-           "hooks": [
-             { "type": "command", "command": ".claude/hooks/session-start-<your-name>.sh" }
-           ]
-         }
-       ]
-     }
-   }
-   ```
-
-実例として本リポジトリの [`.claude/`](../.claude) を参照してください。
 
 ## ⚙️ 環境変数
 

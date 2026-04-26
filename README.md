@@ -47,6 +47,7 @@ That's it. `ccw` scans `.claude/worktrees/` and shows the picker, or spins up a 
 ```bash
 ccw                                       # pick an existing worktree, or start fresh
 ccw -n                                    # new worktree, skip picker
+ccw -s                                    # new worktree + inject the localized superpowers preamble as first prompt
 ccw -- --model <model-id>                 # pass-through: any flags after `--` go to claude verbatim
 ccw -L                                    # list ccw worktrees (text table)
 ccw -L --json                             # same, JSON for scripts / agents
@@ -120,48 +121,6 @@ Make sure `~/.local/bin` is on your `PATH`.
 - [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.76` — ccw uses `--worktree <name>` (added in 2.1.49) together with `-n <name>` (added in 2.1.76). ccw offers to install `claude` via npm / brew if missing.
 - *(optional)* [`gh`](https://cli.github.com/) — enables PR info in the picker
 - *(optional)* [superpowers](https://github.com/obra/superpowers) plugin — declared in [`.claude/settings.json`](./.claude/settings.json) so Claude Code prompts to install it on first launch in this repo
-
-## 🪝 Auto-prompt on new worktree sessions
-
-This repo ships a `SessionStart` hook that injects a fixed instruction at the start of every **new** Claude Code session — never on `--continue` or `/clear`. Useful for steering each fresh worktree session into a consistent workflow (here: brainstorming → writing-plans → executing-plans).
-
-### How it works
-
-- [`.claude/hooks/session-start-superpowers.sh`](./.claude/hooks/session-start-superpowers.sh) prints a JSON object whose `hookSpecificOutput.additionalContext` is added to Claude's initial context.
-- [`.claude/settings.json`](./.claude/settings.json) wires it as a `SessionStart` hook with `matcher: "startup"`, so resume / clear are excluded.
-
-### Reuse in another project
-
-1. Drop a script at `.claude/hooks/session-start-<your-name>.sh` that outputs JSON in the form:
-
-   ```json
-   {
-     "hookSpecificOutput": {
-       "hookEventName": "SessionStart",
-       "additionalContext": "<your instruction>"
-     }
-   }
-   ```
-
-2. `chmod +x` it.
-3. Add to `.claude/settings.json`:
-
-   ```json
-   {
-     "hooks": {
-       "SessionStart": [
-         {
-           "matcher": "startup",
-           "hooks": [
-             { "type": "command", "command": ".claude/hooks/session-start-<your-name>.sh" }
-           ]
-         }
-       ]
-     }
-   }
-   ```
-
-See this repo's [`.claude/`](./.claude) for a working example.
 
 ## ⚙️ Environment
 

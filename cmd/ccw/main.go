@@ -1,6 +1,6 @@
 // Command ccw launches Claude Code in an isolated git worktree.
 //
-// Phase 3 status: -h / -v / -n and the picker are at parity with the
+// Phase 3 status: -h / -v / -n / -s and the picker are at parity with the
 // bash implementation. The bash `bin/ccw` is kept as a transitional fallback.
 package main
 
@@ -18,6 +18,7 @@ import (
 	"github.com/tqer39/ccw-cli/internal/listmode"
 	"github.com/tqer39/ccw-cli/internal/namegen"
 	"github.com/tqer39/ccw-cli/internal/picker"
+	"github.com/tqer39/ccw-cli/internal/superpowers"
 	"github.com/tqer39/ccw-cli/internal/ui"
 	"github.com/tqer39/ccw-cli/internal/version"
 	"github.com/tqer39/ccw-cli/internal/worktree"
@@ -78,13 +79,15 @@ func run(flags cli.Flags) int {
 	}
 	_ = gitx.SetOriginHead(mainRepo)
 
+	preamble := maybePreamble(flags.Superpowers)
+
 	if flags.NewWorktree {
 		name, err := namegen.Generate(mainRepo)
 		if err != nil {
 			ui.Error("generate worktree name: %v", err)
 			return 1
 		}
-		code, err := claude.LaunchNew(mainRepo, name, flags.Passthrough)
+		code, err := claude.LaunchNew(mainRepo, name, preamble, flags.Passthrough)
 		if err != nil {
 			ui.Error("%v", err)
 			return 1
@@ -93,6 +96,15 @@ func run(flags cli.Flags) int {
 	}
 
 	return runPicker(mainRepo, flags.Passthrough, interactive)
+}
+
+// maybePreamble returns the localized superpowers preamble when -s was passed,
+// or an empty string otherwise. Plugin presence is delegated to .claude/settings.json.
+func maybePreamble(enabled bool) string {
+	if !enabled {
+		return ""
+	}
+	return superpowers.Preamble(i18n.Current())
 }
 
 func runPicker(mainRepo string, passthrough []string, interactive bool) int {
@@ -111,7 +123,7 @@ func runPicker(mainRepo string, passthrough []string, interactive bool) int {
 				ui.Error("generate worktree name: %v", err)
 				return 1
 			}
-			code, err := claude.LaunchNew(mainRepo, name, passthrough)
+			code, err := claude.LaunchNew(mainRepo, name, "", passthrough)
 			if err != nil {
 				ui.Error("%v", err)
 				return 1
@@ -166,7 +178,7 @@ func runResume(sel picker.Selection, passthrough []string) int {
 
 func launchInPlace(path string, passthrough []string) int {
 	name := filepath.Base(path)
-	code, err := claude.LaunchInWorktree(path, name, passthrough)
+	code, err := claude.LaunchInWorktree(path, name, "", passthrough)
 	if err != nil {
 		ui.Error("%v", err)
 		return 1
