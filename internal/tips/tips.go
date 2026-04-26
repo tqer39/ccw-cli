@@ -13,6 +13,8 @@ var keys = []i18n.Key{
 	i18n.KeyTipCleanAll,
 	i18n.KeyTipPassthrough,
 	i18n.KeyTipResumeBadge,
+	i18n.KeyTipStatusBadge,
+	i18n.KeyTipPRBadge,
 }
 
 // Defaults returns the current language's tip strings.
