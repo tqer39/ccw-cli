@@ -85,3 +85,39 @@ func TestBadge_PrunableNoColor(t *testing.T) {
 		t.Errorf("Badge(prunable) NO_COLOR = %q, want %q", got, "[prune] ")
 	}
 }
+
+func TestSeparator_NoColor(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	if got := Separator(); got != " | " {
+		t.Errorf("Separator() NO_COLOR = %q, want %q", got, " | ")
+	}
+}
+
+func TestSeparator_ColoredContainsPipe(t *testing.T) {
+	t.Setenv("NO_COLOR", "")
+	got := Separator()
+	if !strings.Contains(got, "|") {
+		t.Errorf("Separator() = %q, want substring |", got)
+	}
+	if !strings.Contains(got, "\x1b[") {
+		t.Errorf("Separator() expected ANSI escape when NO_COLOR unset, got %q", got)
+	}
+}
+
+func TestMissingOnDisk_NoColor(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	if got := MissingOnDisk(); got != "(missing on disk)" {
+		t.Errorf("MissingOnDisk() NO_COLOR = %q, want %q", got, "(missing on disk)")
+	}
+}
+
+func TestMissingOnDisk_ColoredContainsLabel(t *testing.T) {
+	t.Setenv("NO_COLOR", "")
+	got := MissingOnDisk()
+	if !strings.Contains(got, "(missing on disk)") {
+		t.Errorf("MissingOnDisk() = %q, want substring (missing on disk)", got)
+	}
+	if !strings.Contains(got, "\x1b[") {
+		t.Errorf("MissingOnDisk() expected ANSI escape when NO_COLOR unset, got %q", got)
+	}
+}

@@ -46,6 +46,27 @@ func badgeLabel(s worktree.Status) (colored, plain string) {
 
 func noColor() bool { return os.Getenv("NO_COLOR") != "" }
 
+// Separator returns the dim-grey vertical bar used to join inline header
+// segments (resume, name, status, indicators). Falls back to plain " | "
+// when noColor() is true.
+func Separator() string {
+	if noColor() {
+		return " | "
+	}
+	return lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(" | ")
+}
+
+// MissingOnDisk returns the dim-grey "(missing on disk)" label used in place
+// of status / indicators for prunable worktrees whose physical directory is
+// gone. Falls back to plain text when noColor() is true.
+func MissingOnDisk() string {
+	const label = "(missing on disk)"
+	if noColor() {
+		return label
+	}
+	return lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(label)
+}
+
 // PRBadge renders a PR state badge. Upstream states from `gh pr list` are
 // OPEN / DRAFT / MERGED / CLOSED; unknown values fall back to a lowercased
 // bracketed label with no color.
