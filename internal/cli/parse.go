@@ -15,6 +15,7 @@ type Flags struct {
 	Help         bool
 	Version      bool
 	NewWorktree  bool
+	Superpowers  bool
 	CleanAll     bool
 	StatusFilter string
 	Force        bool
@@ -42,6 +43,7 @@ func Parse(argv []string) (Flags, error) {
 	fs.BoolVarP(&f.Help, "help", "h", false, "show help")
 	fs.BoolVarP(&f.Version, "version", "v", false, "show version")
 	fs.BoolVarP(&f.NewWorktree, "new", "n", false, "always start a new worktree")
+	fs.BoolVarP(&f.Superpowers, "superpowers", "s", false, "inject localized superpowers preamble (implies --new)")
 	fs.BoolVar(&f.CleanAll, "clean-all", false, "bulk delete worktrees (non-interactive unless --force/--yes)")
 	fs.StringVar(&f.StatusFilter, "status", "", "status filter: all | pushed | local-only | dirty (default all)")
 	fs.BoolVar(&f.Force, "force", false, "allow --force removal of dirty worktrees")
@@ -59,6 +61,9 @@ func Parse(argv []string) (Flags, error) {
 	}
 	if args := fs.Args(); len(args) > 0 {
 		return Flags{}, fmt.Errorf("unexpected positional arguments: %v (use -- to pass args to claude)", args)
+	}
+	if f.Superpowers {
+		f.NewWorktree = true
 	}
 	if err := validateCleanAll(&f); err != nil {
 		return Flags{}, err
@@ -95,6 +100,8 @@ func validateList(f Flags, post []string) error {
 		return nil
 	}
 	switch {
+	case f.Superpowers:
+		return fmt.Errorf("--list cannot be combined with --superpowers")
 	case f.NewWorktree:
 		return fmt.Errorf("--list cannot be combined with --new")
 	case f.CleanAll:
