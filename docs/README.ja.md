@@ -119,7 +119,7 @@ go build -o ~/.local/bin/ccw ~/ccw-cli/cmd/ccw
 - [`git`](https://git-scm.com/)
 - [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.76` — ccw は `--worktree <name>` (2.1.49 で追加) と `-n <name>` (2.1.76 で追加) を併用します。未導入なら起動時に npm / brew で入れるかを確認します。
 - *(optional)* [`gh`](https://cli.github.com/) — picker で PR 情報を表示
-- *(optional)* [superpowers](https://github.com/obra/superpowers) プラグイン — [`.claude/settings.json`](../.claude/settings.json) で宣言済み。本リポジトリで初回 `claude` 起動時にインストールを促されます
+- *(optional)* [superpowers](https://github.com/obra/superpowers) プラグイン — `-s` を付けて起動するとき（superpowers preamble を注入するモード）のみ必要です。[`.claude/settings.json`](../.claude/settings.json) で宣言済みのため、本リポジトリで初回 `claude` 起動時にインストールを促されます
 
 ## ⚙️ 環境変数
 
