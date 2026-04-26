@@ -7,6 +7,8 @@ tip:
   cleanAll: "--clean-all sweeps pushed worktrees in bulk"
   passthrough: "ccw -- --model <id> passes flags through to claude"
   resumeBadge: "The RESUME badge is derived from ~/.claude/projects/"
+  statusBadge: "Status: PUSHED=pushed / LOCAL=unpushed / DIRTY=uncommitted"
+  prBadge: "PR: OPEN / DRAFT / MERGED / CLOSED colored by gh pr list state"
 
 help:
   usage: |
