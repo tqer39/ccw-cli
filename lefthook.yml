@@ -70,4 +70,12 @@ pre-commit:
       glob: "renovate.json5"
       run: npm exec -y --package=renovate -- renovate-config-validator {staged_files}
 
+    # ── Spell check ──
+    cspell:
+      run: |
+        npm exec -y --package=cspell -- cspell lint \
+          --no-progress --no-summary --no-must-find-files \
+          --config .cspell/cspell.json \
+          {staged_files}
+
 # commit-msg / pre-push は現状不要。必要になったらここへ追加。
