@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
-	"strings"
 
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
@@ -44,24 +43,25 @@ func renderRow(li listItem, width int, prUnavailable bool, selected bool) string
 	wt := li.wt
 	name := filepath.Base(wt.Path)
 	resume := ResumeBadge(wt.HasSession)
-	status := Badge(wt.Status)
-	indicators := wt.Indicators()
-	if wt.Status == worktree.StatusPrunable {
-		indicators = "(missing on disk)"
-	}
+	sep := Separator()
 
 	// Reserve a 4-cell right-edge margin so IDE-embedded terminals (Cursor,
 	// cmux, ...) that report Width slightly larger than the visible area
-	// don't clip the right-aligned status/indicators. Falls back to the raw
-	// width when it is too small to shrink meaningfully.
+	// don't clip the right edge. Falls back to the raw width when it is too
+	// small to shrink meaningfully.
 	effectiveWidth := width
 	if width > 4 {
 		effectiveWidth = width - 4
 	}
 
-	header := fmt.Sprintf("%s%s · 🌲 %s", prefix, resume, name)
-	right := fmt.Sprintf("%s  %s", status, indicators)
-	header = padBetween(header, right, effectiveWidth)
+	var header string
+	if wt.Status == worktree.StatusPrunable {
+		header = prefix + resume + sep + "🌲 " + name + sep + MissingOnDisk()
+	} else {
+		status := Badge(wt.Status)
+		indicators := wt.Indicators()
+		header = prefix + resume + sep + "🌲 " + name + sep + status + sep + indicators
+	}
 
 	branchLine := fmt.Sprintf("    branch:  %s", wt.Branch)
 	prCell := ""
@@ -77,20 +77,6 @@ func renderRow(li listItem, width int, prUnavailable bool, selected bool) string
 	}
 
 	return header + "\n" + branchLine + "\n" + prLine
-}
-
-// padBetween places left and right on the same line with spaces between so
-// that right is right-aligned at the given width. Falls back to a 2-space
-// separator when width is too small.
-func padBetween(left, right string, width int) string {
-	if width <= 0 {
-		return left + "  " + right
-	}
-	gap := width - lipgloss.Width(left) - lipgloss.Width(right)
-	if gap < 2 {
-		gap = 2
-	}
-	return left + strings.Repeat(" ", gap) + right
 }
 
 // renderPRCell builds the PR portion of the row: either a state-tinted
