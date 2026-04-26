@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"charm.land/lipgloss/v2"
 	"github.com/tqer39/ccw-cli/internal/gh"
 	"github.com/tqer39/ccw-cli/internal/worktree"
 )
@@ -147,5 +148,29 @@ func TestRenderRow_PRUnavailableHidesPRContent(t *testing.T) {
 	// pr line still appears as label, but the cell is empty
 	if !strings.Contains(got, "pr:") {
 		t.Errorf("pr: label should still appear:\n%s", got)
+	}
+}
+
+func TestRenderRow_RightMargin(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	li := listItem{
+		tag: tagWorktree,
+		wt: &worktree.Info{
+			Path:        "/repo/.claude/worktrees/foo",
+			Branch:      "feature/right-margin",
+			Status:      worktree.StatusLocalOnly,
+			AheadCount:  0,
+			BehindCount: 0,
+		},
+	}
+	const width = 80
+	const margin = 4
+	got := renderRow(li, width, true, false)
+	lines := strings.Split(strings.TrimRight(got, "\n"), "\n")
+	for i, line := range lines {
+		if w := lipgloss.Width(line); w > width-margin {
+			t.Errorf("line %d has visible width %d > %d (width %d - margin %d):\n%s",
+				i, w, width-margin, width, margin, line)
+		}
 	}
 }

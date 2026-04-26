@@ -50,9 +50,18 @@ func renderRow(li listItem, width int, prUnavailable bool, selected bool) string
 		indicators = "(missing on disk)"
 	}
 
+	// Reserve a 4-cell right-edge margin so IDE-embedded terminals (Cursor,
+	// cmux, ...) that report Width slightly larger than the visible area
+	// don't clip the right-aligned status/indicators. Falls back to the raw
+	// width when it is too small to shrink meaningfully.
+	effectiveWidth := width
+	if width > 4 {
+		effectiveWidth = width - 4
+	}
+
 	header := fmt.Sprintf("%s%s · 🌲 %s", prefix, resume, name)
 	right := fmt.Sprintf("%s  %s", status, indicators)
-	header = padBetween(header, right, width)
+	header = padBetween(header, right, effectiveWidth)
 
 	branchLine := fmt.Sprintf("    branch:  %s", wt.Branch)
 	prCell := ""
@@ -62,9 +71,9 @@ func renderRow(li listItem, width int, prUnavailable bool, selected bool) string
 	prLine := "    pr:      " + prCell
 
 	if width > 0 {
-		header = truncateToWidth(header, width)
-		branchLine = truncateToWidth(branchLine, width)
-		prLine = truncateToWidth(prLine, width)
+		header = truncateToWidth(header, effectiveWidth)
+		branchLine = truncateToWidth(branchLine, effectiveWidth)
+		prLine = truncateToWidth(prLine, effectiveWidth)
 	}
 
 	return header + "\n" + branchLine + "\n" + prLine
