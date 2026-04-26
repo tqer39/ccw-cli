@@ -32,10 +32,8 @@ That's it. `ccw` scans `.claude/worktrees/` and shows the picker, or spins up a 
 ## ✨ Features
 
 - 🤝 **Hand-off and step aside** — pick (or create) a worktree, launch `claude` in it, then ccw exits. No daemon, no wrapper process, no coupling to tmux/zellij — just the bridge.
-- 🧭 **Works from anywhere in the repo** — run `ccw` inside a worktree or subdirectory; ccw resolves the main repo automatically
 - 🎯 **Worktree state at a glance** — pushed / ahead / behind / dirty, plus PR info, all in one picker
 - 🧹 **Bulk cleanup** — `[clean pushed]` or `ccw --clean-all` sweeps the worktrees you're done with
-- ➡️ **claude flags pass through** — anything after `--` goes to claude untouched, so `--model` and friends still work
 - 📋 **Machine-readable list** — `ccw -L --json` aggregates worktree × git × PR × session info in one shot, ideal for scripts and Claude Code agent use
 
 ## 🎬 Demo
