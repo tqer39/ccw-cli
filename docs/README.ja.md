@@ -33,7 +33,6 @@ ccw
 - 🧭 **リポジトリ内のどこからでも起動** — worktree 内やサブディレクトリからでも `ccw` が動く（main repo を自動解決）
 - 🎯 **worktree の状態が一目でわかる** — push 済 / ahead・behind / dirty、PR 番号を picker にまとめて表示
 - 🧹 **溜まった worktree を一括掃除** — `[clean pushed]` / `ccw --clean-all` で push 済をまとめて削除
-- 🦸 **"設計してから書く" 流儀で起動** — `-s` で brainstorming → writing-plans → executing-plans の手順を claude に指示（plugin 未導入なら入れるか確認）
 - ➡️ **claude のオプションはそのまま届く** — `--` 以降の引数は素通しするので `--model` などが使える
 - 📋 **機械可読リスト** — `ccw -L --json` で worktree × git × PR × session 情報を一括取得。スクリプトや Claude Code のエージェント用途に最適
 
@@ -46,7 +45,6 @@ ccw
 ```bash
 ccw                                       # 既存 worktree を選ぶか、新規起動
 ccw -n                                    # picker をスキップして新規作成
-ccw -s                                    # 新規 + superpowers プリアンブル
 ccw -- --model <model-id>                 # パススルー: `--` 以降の引数はそのまま claude に渡す（モデル ID は一例）
 ccw -L                                    # ccw worktree を表形式で一覧
 ccw -L --json                             # 同上、JSON 出力（スクリプト・エージェント用）
@@ -119,7 +117,7 @@ go build -o ~/.local/bin/ccw ~/ccw-cli/cmd/ccw
 - [`git`](https://git-scm.com/)
 - [Claude Code](https://docs.claude.com/claude-code) `>= 2.1.76` — ccw は `--worktree <name>` (2.1.49 で追加) と `-n <name>` (2.1.76 で追加) を併用します。未導入なら起動時に npm / brew で入れるかを確認します。
 - *(optional)* [`gh`](https://cli.github.com/) — picker で PR 情報を表示
-- *(optional)* [superpowers](https://github.com/obra/superpowers) プラグイン — `-s` 利用時に自動チェック
+- *(optional)* [superpowers](https://github.com/obra/superpowers) プラグイン — [`.claude/settings.json`](../.claude/settings.json) で宣言済み。本リポジトリで初回 `claude` 起動時にインストールを促されます
 
 ## ⚙️ 環境変数
 
