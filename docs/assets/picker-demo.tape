@@ -1,5 +1,5 @@
 Set Shell "bash"
-Set FontSize 20
+Set FontSize 22
 Set Width 1150
 Set Height 720
 Set Padding 16
