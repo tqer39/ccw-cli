@@ -1,6 +1,6 @@
 Set Shell "bash"
-Set FontSize 18
-Set Width 1200
+Set FontSize 20
+Set Width 1150
 Set Height 720
 Set Padding 16
 Set Theme "Catppuccin Mocha"
