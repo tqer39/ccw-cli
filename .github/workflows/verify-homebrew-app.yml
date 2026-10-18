@@ -1,0 +1,37 @@
+name: Verify Homebrew App
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: >-
+      github.repository_owner == 'tqer39' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == github.repository_owner &&
+      github.triggering_actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Mint Homebrew tap token
+        id: tap-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.HOMEBREW_APP_CLIENT_ID }}
+          private-key: ${{ secrets.HOMEBREW_APP_PRIVATE_KEY }}
+          owner: tqer39
+          repositories: homebrew-tap
+          permission-contents: write
+
+      - name: Verify scope and read access without publishing
+        env:
+          GH_TOKEN: ${{ steps.tap-token.outputs.token }}
+        run: |
+          gh api 'installation/repositories?per_page=100' --jq '
+            .total_count == 1 and
+            [.repositories[].full_name] == ["tqer39/homebrew-tap"]
+          ' | grep -qx true
+          gh api repos/tqer39/homebrew-tap/git/ref/heads/main --silent
